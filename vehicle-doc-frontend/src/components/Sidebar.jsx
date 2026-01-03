@@ -56,10 +56,12 @@ export default Sidebar;
 const SideItem = ({ icon, label, to, active, badge, onClick }) => {
   const baseClass =
     "flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-300 group";
-  const activeClass =
-    "bg-gradient-to-r from-violet-600/80 to-indigo-600/80 shadow-lg shadow-violet-500/30";
+ const activeClass =
+  "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg";
+
   const hoverClass =
-    "hover:bg-gradient-to-r hover:from-violet-500/30 hover:to-indigo-500/30 hover:shadow-md hover:shadow-violet-500/20";
+  "hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-500 hover:text-white";
+
 
   if (to) {
     return (
@@ -69,8 +71,9 @@ const SideItem = ({ icon, label, to, active, badge, onClick }) => {
           `${baseClass} ${isActive || active ? activeClass : hoverClass}`
         }
       >
-        <span className="text-violet-200 group-hover:text-white transition">{icon}</span>
-        <span className="flex-1 truncate group-hover:text-white transition">{label}</span>
+       <span className="text-white group-hover:text-violet-200 transition">{icon}</span>
+<span className="flex-1 truncate text-white group-hover:text-violet-200 transition">{label}</span>
+
         {badge && (
           <span className="bg-pink-500 text-[11px] px-2 py-0.5 rounded-full">{badge}</span>
         )}

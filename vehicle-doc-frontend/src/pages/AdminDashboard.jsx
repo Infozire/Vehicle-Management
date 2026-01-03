@@ -21,6 +21,15 @@ export default function AdminDashboard() {
   const [vehicleDetails, setVehicleDetails] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
+const DOC_COLORS = {
+  "RC Book": "from-[#4E7BFF] to-[#2B57E5]",
+  Insurance: "from-[#37B2A4] to-[#1F8E82]",
+  Fitness: "from-[#9C6ADE] to-[#7B4DD8]",
+  Pollution: "from-[#FF9F43] to-[#F77F1E]",
+  "Tamil Nadu Permit": "from-[#E07A97] to-[#D56585]",
+  "Pondicherry Permit": "from-[#5AA8BF] to-[#3F96AF]",
+  "Vehicle Photo": "from-[#555] to-[#222]",
+};
 
  useEffect(() => {
   // Vehicles
@@ -140,8 +149,8 @@ const handlePreview = (filePath) => {
             label="Total Users"
             value={users.length}
           />
-          <Stat
-            color="from-[#FF9F43] to-[#F77F1E]"
+        <Stat
+            color="from-[#9C6ADE] to-[#7B4DD8]"
             icon={<File />}
             label="Total Documents"
             value={documents.length}
@@ -195,13 +204,13 @@ const handlePreview = (filePath) => {
 
             <div className="grid grid-cols-2 gap-8 min-w-[520px]">
               {[
-                { title: "RC Book", color: "linear-gradient(135deg, #5B7CFA 0%, #4E6EEA 100%)", icon: <File />, expiry: "01/01/2024" },
-                { title: "Insurance", color: "linear-gradient(135deg, #6FB1A6 0%, #4FA295 100%)", icon: <ShieldCheck />, expiry: "15/11/2024" },
-                { title: "Fitness", color: "linear-gradient(135deg, #9C6ADE 0%, #8B58CF 100%)", icon: <BadgeCheck />, expiry: "01/08/2024" },
-                { title: "Pollution", color: "linear-gradient(135deg, #F2A35C 0%, #E88A3C 100%)", icon: <File />, expiry: "10/12/2024" },
-                { title: "Tamil Nadu Permit", color: "linear-gradient(135deg, #E07A97 0%, #D56585 100%)", icon: <File />, expiry: "05/09/2024" },
-                { title: "Pondicherry Permit", color: "linear-gradient(135deg, #5AA8BF 0%, #3F96AF 100%)", icon: <File />, expiry: "20/11/2024" },
-                { title: "Vehicle Photo", color: "linear-gradient(135deg, #444 0%, #111 100%)", icon: <File />, expiry: "—" }
+                { title: "RC Book", color: "linear-gradient(135deg, #5B7CFA 0%, #4E6EEA 100%)", icon: <File className="text-white" size={20} />, expiry: "01/01/2024" },
+                { title: "Insurance", color: "linear-gradient(135deg, #6FB1A6 0%, #4FA295 100%)", icon: <ShieldCheck className="text-white" size={20}/>, expiry: "15/11/2024" },
+                { title: "Fitness", color: "linear-gradient(135deg, #9C6ADE 0%, #8B58CF 100%)", icon: <BadgeCheck className="text-white" size={20} />, expiry: "01/08/2024" },
+                { title: "Pollution", color: "linear-gradient(135deg, #F2A35C 0%, #E88A3C 100%)", icon: <File className="text-white" size={20} />, expiry: "10/12/2024" },
+                { title: "Tamil Nadu Permit", color: "linear-gradient(135deg, #E07A97 0%, #D56585 100%)", icon: <File className="text-white" size={20}/>, expiry: "05/09/2024" },
+                { title: "Pondicherry Permit", color: "linear-gradient(135deg, #5AA8BF 0%, #3F96AF 100%)", icon: <File className="text-white" size={20}/>, expiry: "20/11/2024" },
+                { title: "Vehicle Photo", color: "linear-gradient(135deg, #444 0%, #111 100%)", icon: <File className="text-white" size={20}/>, expiry: "—" }
               ].map((doc) => (
                 <DocCard
                   key={doc.title}
@@ -299,18 +308,29 @@ const Input = ({ label, value }) => (
     <input value={value} disabled className="w-full px-4 py-3 rounded-xl bg-gray-50 border" />
   </div>
 );
-
 const DocCard = ({ title, color, icon, expiryDate, onUpload, onPreview, uploading }) => (
-  <div className="bg-white rounded-2xl shadow-lg">
-    <div className="flex items-center gap-3 px-4 py-3 h-[48px] text-white rounded-t-2xl" style={{ backgroundImage: color }}>
-      <div className="bg-white/20 p-2 rounded-lg">{icon}</div>
-      <h3 className="font-semibold text-sm">{title}</h3>
-    </div>
+  <div className="rounded-2xl shadow-lg overflow-hidden">
+    
+    {/* COLORED TOP */}
+    <div
+      className="px-4 py-3 flex flex-col gap-2"
+      style={{ background: color }}
+    >
+      {/* HEADER */}
+      <div className="flex items-center gap-3">
+        <div className="bg-white/20 p-2 rounded-lg flex items-center justify-center">
+          {icon}
+        </div>
+        <h3 className="font-semibold text-white text-sm">
+          {title}
+        </h3>
+      </div>
 
-    <div className="p-4 space-y-3">
-      <div className="flex w-full gap-3">
-        <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-[#4E73DF] text-white rounded-lg text-sm font-medium cursor-pointer">
-          <Upload size={16} /> {uploading ? "Uploading..." : "Upload"}
+      {/* ACTION BUTTONS */}
+      <div className="flex w-full gap-2 mt-2">
+        <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#2563EB] hover:bg-[#1E40AF] text-white rounded-lg text-xs font-medium cursor-pointer transition shadow-sm"
+>
+          <Upload size={14} /> {uploading ? "Uploading..." : "Upload"}
           <input
             type="file"
             hidden
@@ -320,16 +340,19 @@ const DocCard = ({ title, color, icon, expiryDate, onUpload, onPreview, uploadin
 
         <button
           type="button"
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-100 text-gray-800 rounded-lg text-sm font-medium"
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/20 text-white rounded-lg text-xs font-medium hover:bg-white/30 transition"
           onClick={onPreview}
         >
-          <Eye size={16} /> Preview
+          <Eye size={14} /> Preview
         </button>
       </div>
+    </div>
 
-      <p className="text-sm text-gray-600">
-        Expiry Date: <span className="font-medium">{expiryDate}</span>
-      </p>
+    {/* EXPIRY */}
+    <div className="px-4 py-2 bg-white text-gray-800 text-xs font-medium">
+      Expiry Date: <span className="font-semibold">{expiryDate}</span>
     </div>
   </div>
 );
+
+
