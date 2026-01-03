@@ -1,0 +1,93 @@
+import { NavLink, useNavigate } from "react-router-dom";
+import { Home, Car, FileText, Users, Bell, Settings, LogOut } from "lucide-react";
+
+const Sidebar = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear token or user info
+    localStorage.removeItem("token"); // adjust if using different key
+    localStorage.removeItem("user");
+    // Redirect to login
+    navigate("/login");
+  };
+
+  const menuItems = [
+    { icon: <Home size={18} />, label: "Dashboard", to: "/admin" },
+    { icon: <Car size={18} />, label: "Vehicles", to: "/vehicles" },
+    { icon: <FileText size={18} />, label: "Documents", to: "/documents" },
+    { icon: <Users size={18} />, label: "Users", to: "/users" },
+    { icon: <Bell size={18} />, label: "Expiry Alerts", badge: "5" },
+    { icon: <Settings size={18} />, label: "Settings", to: "/settings" },
+    { icon: <LogOut size={18} />, label: "Logout", onClick: handleLogout },
+  ];
+
+  return (
+    <aside
+      className="w-[220px] text-white px-4 py-8 shadow-2xl bg-cover bg-center relative"
+      style={{
+        backgroundImage:
+          "url('https://images.unsplash.com/photo-1519681393784-d120267933ba')",
+      }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1E1B4B]/90 via-[#312E81]/90 to-[#3730A3]/90" />
+
+      {/* CONTENT */}
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 text-[20px] font-semibold mb-12">
+          <Car size={20} />
+          Admin Panel
+        </div>
+
+        <nav className="space-y-2 text-[14px]">
+          {menuItems.map((item, index) => (
+            <SideItem key={index} {...item} />
+          ))}
+        </nav>
+      </div>
+    </aside>
+  );
+};
+
+export default Sidebar;
+
+/* --------- SideItem --------- */
+const SideItem = ({ icon, label, to, active, badge, onClick }) => {
+  const baseClass =
+    "flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-300 group";
+  const activeClass =
+    "bg-gradient-to-r from-violet-600/80 to-indigo-600/80 shadow-lg shadow-violet-500/30";
+  const hoverClass =
+    "hover:bg-gradient-to-r hover:from-violet-500/30 hover:to-indigo-500/30 hover:shadow-md hover:shadow-violet-500/20";
+
+  if (to) {
+    return (
+      <NavLink
+        to={to}
+        className={({ isActive }) =>
+          `${baseClass} ${isActive || active ? activeClass : hoverClass}`
+        }
+      >
+        <span className="text-violet-200 group-hover:text-white transition">{icon}</span>
+        <span className="flex-1 truncate group-hover:text-white transition">{label}</span>
+        {badge && (
+          <span className="bg-pink-500 text-[11px] px-2 py-0.5 rounded-full">{badge}</span>
+        )}
+      </NavLink>
+    );
+  }
+
+  return (
+    <div
+      className={`${baseClass} ${active ? activeClass : hoverClass}`}
+      onClick={onClick} // Handle logout click
+    >
+      <span className="text-violet-200 group-hover:text-white transition">{icon}</span>
+      <span className="flex-1 truncate group-hover:text-white transition">{label}</span>
+      {badge && (
+        <span className="bg-pink-500 text-[11px] px-2 py-0.5 rounded-full">{badge}</span>
+      )}
+    </div>
+  );
+};
