@@ -27,18 +27,21 @@ export default function Dashboard() {
   const handleSearch = async (e) => {
     e.preventDefault();
     setError("");
+    setResults([]); // ✅ clear old data
+
     try {
       const token = localStorage.getItem("token");
       const res = await API.get(`/api/vehicles/search?number=${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       setResults(Array.isArray(res.data) ? res.data : [res.data]);
     } catch {
       setError("No vehicle found");
     }
   };
 
-  // helper: get document by type
+  // helper
   const getDoc = (docs, type) =>
     docs?.find((d) => d.document_type === type);
 
@@ -83,65 +86,63 @@ export default function Dashboard() {
                   Customer: {v.customer?.name || "0"}
                 </p>
 
-                <DocRow
-                  icon={FileCheck}
-                  title="Pondicherry Permit"
-                  date="Dec 30, 2025"
-                  bg="linear-gradient(90deg, rgba(23, 58, 232, 0.65), rgba(120,150,255,0.55), rgba(252,252,252,0.45))"
-                  fileUrl={
-                    getDoc(docs, "Pondicherry Permit")
-                      ? `${API.defaults.baseURL}/${getDoc(docs, "Pondicherry Permit").file_path}`
-                      : null
-                  }
-                />
+                {/* ✅ Render ONLY if document exists */}
 
-                <DocRow
-                  icon={FileText}
-                  title="Tamil Nadu Permit"
-                  date="Jan 01, 2024"
-                  bg="linear-gradient(90deg, rgba(188,197,225,0.35), rgba(240,244,255,1))"
-                  fileUrl={
-                    getDoc(docs, "Tamil Nadu Permit")
-                      ? `${API.defaults.baseURL}/${getDoc(docs, "Tamil Nadu Permit").file_path}`
-                      : null
-                  }
-                />
+                {getDoc(docs, "Pondicherry Permit") && (
+                  <DocRow
+                    icon={FileCheck}
+                    title="Pondicherry Permit"
+                    date={new Date(getDoc(docs, "Pondicherry Permit").expiry_date).toDateString()}
+                    bg="linear-gradient(90deg, rgba(23,58,232,.65), rgba(120,150,255,.55), rgba(252,252,252,.45))"
+                    fileUrl={`${API.defaults.baseURL}/${getDoc(docs, "Pondicherry Permit").file_path}`}
+                  />
+                )}
 
-                <DocRow
-                  icon={Cloud}
-                  title="Pollution"
-                  date="Aug 20, 2023"
-                  bg="linear-gradient(90deg, rgba(241,93,24,0.49), rgba(255,255,255,0.77))"
-                  fileUrl={
-                    getDoc(docs, "Pollution")
-                      ? `${API.defaults.baseURL}/${getDoc(docs, "Pollution").file_path}`
-                      : null
-                  }
-                />
+                {getDoc(docs, "Tamil Nadu Permit") && (
+                  <DocRow
+                    icon={FileText}
+                    title="Tamil Nadu Permit"
+                    date={new Date(getDoc(docs, "Tamil Nadu Permit").expiry_date).toDateString()}
+                    bg="linear-gradient(90deg, rgba(188,197,225,.35), rgba(240,244,255,1))"
+                    fileUrl={`${API.defaults.baseURL}/${getDoc(docs, "Tamil Nadu Permit").file_path}`}
+                  />
+                )}
 
-                <DocRow
-                  icon={ShieldCheck}
-                  title="Insurance"
-                  date="Sep 16, 2023"
-                  bg="linear-gradient(90deg, rgba(58,175,169,0.48), rgba(255,255,255,1))"
-                  fileUrl={
-                    getDoc(docs, "Insurance")
-                      ? `${API.defaults.baseURL}/${getDoc(docs, "Insurance").file_path}`
-                      : null
-                  }
-                />
+                {getDoc(docs, "Pollution") && (
+                  <DocRow
+                    icon={Cloud}
+                    title="Pollution"
+                    date={new Date(getDoc(docs, "Pollution").expiry_date).toDateString()}
+                    bg="linear-gradient(90deg, rgba(241,93,24,.49), rgba(255,255,255,.77))"
+                    fileUrl={`${API.defaults.baseURL}/${getDoc(docs, "Pollution").file_path}`}
+                  />
+                )}
 
-                <DocRow
-                  icon={BookOpen}
-                  title="RC Book"
-                  date="Dec 10, 2023"
-                  bg="linear-gradient(90deg, rgba(205,63,244,0.59), rgba(165,170,255,0.55))"
-                  fileUrl={
-                    getDoc(docs, "RC Book")
-                      ? `${API.defaults.baseURL}/${getDoc(docs, "RC Book").file_path}`
-                      : null
-                  }
-                />
+                {getDoc(docs, "Insurance") && (
+                  <DocRow
+                    icon={ShieldCheck}
+                    title="Insurance"
+                    date={new Date(getDoc(docs, "Insurance").expiry_date).toDateString()}
+                    bg="linear-gradient(90deg, rgba(58,175,169,.48), rgba(255,255,255,1))"
+                    fileUrl={`${API.defaults.baseURL}/${getDoc(docs, "Insurance").file_path}`}
+                  />
+                )}
+
+                {getDoc(docs, "RC Book") && (
+                  <DocRow
+                    icon={BookOpen}
+                    title="RC Book"
+                    date={new Date(getDoc(docs, "RC Book").expiry_date).toDateString()}
+                    bg="linear-gradient(90deg, rgba(205,63,244,.59), rgba(165,170,255,.55))"
+                    fileUrl={`${API.defaults.baseURL}/${getDoc(docs, "RC Book").file_path}`}
+                  />
+                )}
+
+                {docs.length === 0 && (
+                  <p className="text-white/80 text-center py-6">
+                    No documents uploaded for this vehicle
+                  </p>
+                )}
               </div>
             );
           })}
@@ -151,7 +152,7 @@ export default function Dashboard() {
   );
 }
 
-/* DOCUMENT ROW – UI UNTOUCHED */
+/* UI UNCHANGED */
 function DocRow({ icon: Icon, title, date, bg, fileUrl }) {
   const handleView = () => {
     if (!fileUrl) return alert("File not available");
@@ -161,28 +162,17 @@ function DocRow({ icon: Icon, title, date, bg, fileUrl }) {
   const handleDownload = async () => {
     if (!fileUrl) return alert("File not available");
 
-    try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
+    const res = await fetch(fileUrl);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
 
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title}.${fileUrl.split(".").pop()}`;
+    a.click();
 
-      // keep original extension
-      const extension = fileUrl.split(".").pop().split("?")[0];
-      a.href = url;
-      a.download = `${title}.${extension}`;
-
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      alert("Download failed");
-      console.error(err);
-    }
+    URL.revokeObjectURL(url);
   };
-
 
   return (
     <div
@@ -205,16 +195,10 @@ function DocRow({ icon: Icon, title, date, bg, fileUrl }) {
       </div>
 
       <div className="flex gap-3">
-        <button
-          onClick={handleView}
-          className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/80 text-gray-800 text-sm"
-        >
+        <button onClick={handleView} className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/80 text-gray-800 text-sm">
           <Eye size={16} /> View
         </button>
-        <button
-          onClick={handleDownload}
-          className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-white text-sm bg-emerald-700"
-        >
+        <button onClick={handleDownload} className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-white text-sm bg-emerald-700">
           <Download size={16} /> Download
         </button>
       </div>
