@@ -53,8 +53,9 @@ export default function VehiclesPage() {
             <thead className="bg-gray-100 text-gray-600 uppercase">
               <tr>
                 <th className="px-6 py-4">Vehicle Number</th>
-                <th className="px-6 py-4">Make</th>
-                <th className="px-6 py-4">Model</th>
+                <th className="px-6 py-4">RTO</th>
+                <th className="px-6 py-4">Wheel</th>
+                <th className="px-6 py-4">chases No</th>
                 <th className="px-6 py-4">Status</th>
               </tr>
             </thead>
@@ -78,8 +79,9 @@ export default function VehiclesPage() {
                     <td className="px-6 py-4 font-medium">
                       {v.vehicle_number}
                     </td>
-                    <td className="px-6 py-4">{v.make || "-"}</td>
-                    <td className="px-6 py-4">{v.model || "-"}</td>
+                    <td className="px-6 py-4">{v.rto || "-"}</td>
+                    <td className="px-6 py-4">{v.wheel || "-"}</td>
+                    <td className="px-6 py-4">{v.chassis_no || "-"}</td>
                     <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold
