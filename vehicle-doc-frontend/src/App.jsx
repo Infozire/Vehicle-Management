@@ -10,6 +10,21 @@ import VehiclesPage from "./pages/VehiclesPage";
 import UsersPage from "./pages/UsersPage";
 import DocumentsPage from "./pages/DocumentsPage";
 
+// Service Pages
+import DhanushMines from "./pages/services/DhanushMines";
+import SPRTransport from "./pages/services/SPRTransport";
+import SPRMotors from "./pages/services/SPRMotors";
+import SPRJKTyres from "./pages/services/SPRJKTyres";
+import SPRParadise from "./pages/services/SPRParadise";
+import ScrollToTop from "./components/ScrollToTop";
+
+// About Pages
+import AboutHistory from "./pages/about/History";
+import AboutVision from "./pages/about/Vision";
+
+// Contact Page
+import Contact from "./pages/Contact";
+
 const ProtectedRoute = ({ children, role }) => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
@@ -31,6 +46,7 @@ export default function App() {
 
   return (
     <Router>
+        <ScrollToTop />
       <Routes>
 
         {/* ROOT */}
@@ -67,6 +83,7 @@ export default function App() {
           }
         />
 
+        {/* VEHICLE SEARCH */}
         <Route
           path="/vehicleSearch"
           element={
@@ -76,11 +93,25 @@ export default function App() {
           }
         />
 
-        {/* PUBLIC */}
+        {/* PUBLIC PAGES */}
         <Route path="/createVehicles" element={<CreateVehicle />} />
         <Route path="/vehicles" element={<VehiclesPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/documents" element={<DocumentsPage />} />
+
+        {/* SERVICES */}
+        <Route path="/services/dhanush-mines" element={<DhanushMines />} />
+        <Route path="/services/spr-transport" element={<SPRTransport />} />
+        <Route path="/services/spr-motors" element={<SPRMotors />} />
+        <Route path="/services/spr-jk-tyres" element={<SPRJKTyres />} />
+        <Route path="/services/spr-paradise" element={<SPRParadise />} />
+
+        {/* ABOUT */}
+        <Route path="/about/history" element={<AboutHistory />} />
+        <Route path="/about/vision" element={<AboutVision />} />
+
+        {/* CONTACT */}
+        <Route path="/contact" element={<Contact />} />
 
         {/* FALLBACK */}
         <Route path="*" element={<Navigate to="/" replace />} />
