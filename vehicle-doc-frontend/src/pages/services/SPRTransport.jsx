@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import heroImg from "../../assets/sprtransport.png";
+import heroImg from "../../assets/mines.png";
 import Header from "../../components/Header";
 
 export default function SPRTransport() {
