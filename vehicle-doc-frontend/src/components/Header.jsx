@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import sprLogo from "../assets/sprlogo1.png"; // your logo
 import { ChevronDown, LogOut, Menu, X } from "lucide-react";
@@ -9,11 +9,13 @@ export default function Header() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false); // Mobile menu toggle
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login", { replace: true });
-  };
+  // Disable body scroll when modal open
+  useEffect(() => {
+    if (showLoginModal) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "auto";
+  }, [showLoginModal]);
 
   const navItemClass =
     "px-4 py-2 flex items-center gap-1 cursor-pointer hover:text-white transition font-extrabold";
@@ -25,6 +27,12 @@ export default function Header() {
     const route = service.toLowerCase().replace(/\s+/g, "-");
     navigate(`/services/${route}`);
     setMobileOpen(false); // close mobile menu
+  };
+
+  const handleVehicleSearch = () => {
+    const token = localStorage.getItem("token");
+    if (!token) setShowLoginModal(true);
+    else navigate("/vehicleSearch");
   };
 
   return (
@@ -41,7 +49,11 @@ export default function Header() {
           className="flex items-center cursor-pointer gap-2"
           onClick={() => navigate("/")}
         >
-          <img src={sprLogo} alt="SPR Logo" className="h-16 w-auto md:h-24" />
+          <img
+            src={sprLogo}
+            alt="SPR Logo"
+            className="h-20 w-auto md:h-32 lg:h-36"
+          />
           <span
             className="text-2xl font-extrabold text-white"
             style={{ color: "#7A4421" }}
@@ -120,6 +132,7 @@ export default function Header() {
             >
               {[
                 "Dhanush Mines",
+                "Blue Metal",
                 "SPR Transport",
                 "SPR Motors",
                 "SPR JK Tyres",
@@ -136,6 +149,15 @@ export default function Header() {
             </div>
           </div>
 
+          {/* Vehicle Search */}
+          <div
+            className={navItemClass}
+            onClick={handleVehicleSearch}
+            style={{ color: "#000000ff" }}
+          >
+            Vehicle Search
+          </div>
+
           {/* Contact */}
           <div
             className={navItemClass}
@@ -144,15 +166,6 @@ export default function Header() {
           >
             Contact
           </div>
-
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            style={{ color: "#000000ff" }}
-            className="px-4 py-2 rounded-lg bg-[#9B5A2D] text-white hover:bg-[#7A4421] transition flex items-center gap-1"
-          >
-            <LogOut size={16} /> Logout
-          </button>
         </nav>
       </div>
 
@@ -214,6 +227,7 @@ export default function Header() {
                 <div className="ml-4 flex flex-col mt-1">
                   {[
                     "Dhanush Mines",
+                    "Blue Metal",
                     "SPR Transport",
                     "SPR Motors",
                     "SPR JK Tyres",
@@ -231,6 +245,17 @@ export default function Header() {
               )}
             </div>
 
+            {/* Vehicle Search */}
+            <div
+              className="px-2 py-2 font-bold hover:bg-gray-100 rounded cursor-pointer"
+              onClick={() => {
+                handleVehicleSearch();
+                setMobileOpen(false);
+              }}
+            >
+              Vehicle Search
+            </div>
+
             {/* Contact */}
             <div
               className="px-2 py-2 font-bold hover:bg-gray-100 rounded cursor-pointer"
@@ -241,14 +266,47 @@ export default function Header() {
             >
               Contact
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Logout */}
+      {/* Login / SignUp Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full relative">
+            {/* Close button */}
             <button
-              onClick={handleLogout}
-              className="px-4 py-2 rounded-lg bg-[#9B5A2D] text-white hover:bg-[#7A4421] transition flex items-center gap-1 mt-2"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              onClick={() => setShowLoginModal(false)}
             >
-              <LogOut size={16} /> Logout
+              X
             </button>
+
+            <h2 className="text-2xl font-bold mb-4 text-center">
+              Login or Sign Up
+            </h2>
+
+            <div className="flex flex-col gap-4">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                onClick={() => {
+                  navigate("/login");
+                  setShowLoginModal(false);
+                }}
+              >
+                Login
+              </button>
+
+              <button
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                onClick={() => {
+                  navigate("/register");
+                  setShowLoginModal(false);
+                }}
+              >
+                Sign Up
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -34,7 +34,14 @@ export const createVehicle = async (req, res) => {
       wheel,
       chassisNo,
       status,
-      customer
+      customer,
+      rcExpiry,
+      insuranceExpiry,
+      fitnessExpiry,
+      pollutionExpiry,
+      tnPermitExpiry,
+      pyPermitExpiry,
+      roadTaxExpiry
     } = req.body;
 
     if (!vehicleNumber || !chassisNo) {
@@ -57,7 +64,14 @@ export const createVehicle = async (req, res) => {
       wheel,
       chassis_no: chassisNo,
       status: status || "Active",
-      customer
+      customer,
+      rc_expiry: rcExpiry,
+      insurance_expiry: insuranceExpiry,
+      fitness_expiry: fitnessExpiry,
+      pollution_expiry: pollutionExpiry,
+      tn_permit_expiry: tnPermitExpiry || null,
+      py_permit_expiry: pyPermitExpiry || null,
+      road_tax_expiry: roadTaxExpiry || null,
     });
 
     res.status(201).json({
@@ -97,33 +111,36 @@ export const deleteVehicle = async (req, res) => {
 export const searchVehicle = async (req, res) => {
   try {
     const { number } = req.query;
+
     if (!number) {
       return res.status(400).json({ message: "Vehicle number is required" });
     }
 
-    // Find the vehicle
+    const vehicleNumber = number.trim().toUpperCase();
+
+    // 🔒 STRICT MATCH (NO REGEX)
     const vehicle = await Vehicle.findOne({
-      vehicle_number: new RegExp(number, "i")
+      vehicle_number: vehicleNumber
     }).populate("customer", "name email");
 
-    if (!vehicle) return res.status(404).json({ message: "Vehicle not found" });
+    if (!vehicle) {
+      return res.status(404).json({ message: "Vehicle not found" });
+    }
 
     // Fetch documents separately
     const documents = await Document.find({ vehicle: vehicle._id })
       .select("document_type original_name file_path createdAt")
       .sort({ createdAt: -1 });
 
-    // Attach documents to vehicle object
-    const vehicleWithDocs = {
+    res.json({
       ...vehicle.toObject(),
       documents
-    };
-
-    res.json(vehicleWithDocs);
+    });
 
   } catch (err) {
     console.error("Search Vehicle Error:", err);
     res.status(500).json({ message: "Server error: " + err.message });
   }
 };
+
 

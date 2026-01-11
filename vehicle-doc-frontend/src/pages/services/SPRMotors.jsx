@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import heroImg from "../../assets/sprmotors.png";
+import heroImg from "../../assets/motors/mbanner.png";
 import Header from "../../components/Header";
 import m1 from "../../assets/motors/m1.jpg";
 import m2 from "../../assets/motors/m2.jpg";

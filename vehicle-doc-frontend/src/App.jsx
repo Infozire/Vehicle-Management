@@ -9,6 +9,7 @@ import CreateVehicle from "./pages/CreateVehicle";
 import VehiclesPage from "./pages/VehiclesPage";
 import UsersPage from "./pages/UsersPage";
 import DocumentsPage from "./pages/DocumentsPage";
+import UserRequests from "./pages/UserRequests";
 
 // Service Pages
 import DhanushMines from "./pages/services/DhanushMines";
@@ -16,7 +17,7 @@ import SPRTransport from "./pages/services/SPRTransport";
 import SPRMotors from "./pages/services/SPRMotors";
 import SPRJKTyres from "./pages/services/SPRJKTyres";
 import SPRParadise from "./pages/services/SPRParadise";
-import ScrollToTop from "./components/ScrollToTop";
+import BlueMetal from "./pages/services/BlueMetal";
 
 // About Pages
 import AboutHistory from "./pages/about/History";
@@ -24,7 +25,9 @@ import AboutVision from "./pages/about/Vision";
 
 // Contact Page
 import Contact from "./pages/Contact";
+import ScrollToTop from "./components/ScrollToTop";
 
+// Protected Route Component
 const ProtectedRoute = ({ children, role }) => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
@@ -41,23 +44,13 @@ const ProtectedRoute = ({ children, role }) => {
 };
 
 export default function App() {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user"));
-
   return (
     <Router>
-        <ScrollToTop />
+      <ScrollToTop />
       <Routes>
 
-        {/* ROOT */}
-        <Route
-          path="/"
-          element={
-            token && user
-              ? <Navigate to={user.role === "admin" ? "/admin" : "/dashboard"} replace />
-              : <Navigate to="/login" replace />
-          }
-        />
+        {/* ROOT - Landing page is Dashboard (public) */}
+        <Route path="/" element={<Dashboard />} />
 
         {/* AUTH */}
         <Route path="/login" element={<Login />} />
@@ -73,7 +66,8 @@ export default function App() {
           }
         />
 
-        {/* USER */}
+
+        {/* USER DASHBOARD - protected */}
         <Route
           path="/dashboard"
           element={
@@ -83,15 +77,8 @@ export default function App() {
           }
         />
 
-        {/* VEHICLE SEARCH */}
-        <Route
-          path="/vehicleSearch"
-          element={
-            <ProtectedRoute>
-              <VehicleSearch />
-            </ProtectedRoute>
-          }
-        />
+        {/* VEHICLE SEARCH - PUBLIC ACCESS */}
+        <Route path="/vehicleSearch" element={<VehicleSearch />} />
 
         {/* PUBLIC PAGES */}
         <Route path="/createVehicles" element={<CreateVehicle />} />
@@ -105,6 +92,7 @@ export default function App() {
         <Route path="/services/spr-motors" element={<SPRMotors />} />
         <Route path="/services/spr-jk-tyres" element={<SPRJKTyres />} />
         <Route path="/services/spr-paradise" element={<SPRParadise />} />
+        <Route path="/services/spr-bluemetal" element={<BlueMetal />} />
 
         {/* ABOUT */}
         <Route path="/about/history" element={<AboutHistory />} />

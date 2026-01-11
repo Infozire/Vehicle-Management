@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Truck, Factory, Car, ShieldCheck, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import * as jwt_decode from "jwt-decode";
 import { motion } from "framer-motion"; // <-- import Framer Motion
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -11,10 +12,9 @@ import "swiper/css/effect-fade";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, EffectFade } from "swiper/modules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef } from "react";
-import hero1 from "../assets/hero/hero1.png";
+import hero1 from "../assets/hero/owner1.png";
 import hero2 from "../assets/hero/hero2.png";
-import hero4 from "../assets/hero/hero4.jpg";
+import hero3 from "../assets/hero/hero3.png";
 import sprParadiseImg from "../assets/services/spr-paradise.jpg";
 import JKTyresImg from "../assets/services/jktyres.png";
 import sprMotorsImg from "../assets/services/sprmotors.png"
@@ -23,6 +23,8 @@ import sprTransport from "../assets/services/sprtransport.png";
 import PartnersSlider from "../components/PartnersSlider";
 export default function Dashboard() {
   const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+
 const swiperRef = useRef(null);
   const services = [
     {
@@ -38,6 +40,13 @@ const swiperRef = useRef(null);
       icon: <Factory size={36} />,
       image:dhanushminesImg,
       route: "/services/dhanush-mines",
+    },
+       {
+      title: "Blue Metal",
+      desc: "Mining operations with safety, efficiency, and responsible resource management.",
+      icon: <Factory size={36} />,
+      image:dhanushminesImg,
+      route: "/services/spr-bluemetal",
     },
     {
       title: "SPR Motors",
@@ -61,7 +70,25 @@ const swiperRef = useRef(null);
       route: "/services/spr-paradise",
     },
   ];
-
+useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwt_decode(token); // decode JWT
+        // fetch full user info including isApproved
+        fetch(`/api/users/${decoded.id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+          .then((res) => res.json())
+          .then((data) => setUser(data))
+          .catch((err) => console.error(err));
+      } catch (err) {
+        console.error("Invalid token", err);
+      }
+    }
+  }, []);
   // Motion variants for fade + slide up animation
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -89,7 +116,7 @@ const slides = [
     route: "/services/spr-transport",
   },
   {
-    image: hero4,
+    image: hero3,
     title: "Complete Automobile & Tyre Care",
     description:
       "Trusted vehicle service, maintenance, and tyre solutions for all vehicle categories.",
@@ -112,39 +139,45 @@ const slides = [
   >
     {slides.map((slide, index) => (
       <SwiperSlide key={index}>
-        <div
-          className="h-[90vh] bg-cover bg-center relative"
-          style={{ backgroundImage: `url(${slide.image})` }}
-        >
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-black/50"></div>
+       <div className="relative h-[90vh] w-full overflow-hidden">
+  {/* HERO IMAGE – FACE SAFE */}
+  <img
+    src={slide.image}
+    alt={slide.title}
+    className="absolute inset-0 w-full h-full
+               object-cover object-[50%_15%]"
+  />
 
-          {/* Text content */}
-          <div className="relative z-10 max-w-7xl mx-auto px-6 h-full flex items-start pt-60">
-            <motion.div
-              key={index} // important for animation re-trigger
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, ease: "easeOut" }}
-              className="max-w-2xl text-white"
-            >
-              <h1 className="text-4xl md:text-5xl font-extrabold mb-2 uppercase">
-                {slide.title}
-              </h1>
+  {/* Dark overlay */}
+  <div className="absolute inset-0 bg-black/50"></div>
 
-              <p className="text-lg md:text-xl mb-8 opacity-90">
-                {slide.description}
-              </p>
+  {/* Text content */}
+  <div className="relative z-10 max-w-7xl mx-auto px-6 h-full flex items-start pt-60">
+    <motion.div
+      key={index}
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.9, ease: "easeOut" }}
+      className="max-w-2xl text-white"
+    >
+      <h1 className="text-4xl md:text-4xl font-extrabold mb-2 uppercase">
+        {slide.title}
+      </h1>
 
-              <button
-                onClick={() => navigate(slide.route)}
-                className="bg-red-600 hover:bg-red-700 transition px-6 py-3 rounded-md font-semibold"
-              >
-                {slide.buttonText}
-              </button>
-            </motion.div>
-          </div>
-        </div>
+      <p className="text-lg md:text-xl mb-8 opacity-90">
+        {slide.description}
+      </p>
+
+      <button
+        onClick={() => navigate(slide.route)}
+        className="bg-red-600 hover:bg-red-700 transition px-6 py-3 rounded-md font-semibold"
+      >
+        {slide.buttonText}
+      </button>
+    </motion.div>
+  </div>
+</div>
+
       </SwiperSlide>
     ))}
   </Swiper>
@@ -262,8 +295,13 @@ const slides = [
 </section>
 
       {/* Trust Strip */}
-      <VehicleSearch />
-      <section className="bg-gray-100 py-16">
+{user?.isApproved ? (
+  <VehicleSearch />
+) : (
+  <div className="bg-yellow-100 p-6 rounded-xl text-center text-yellow-800">
+    Your account is awaiting admin approval to access vehicle search.
+  </div>
+)}      <section className="bg-gray-100 py-16">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-10 text-center">
           <div>
             <h3 className="text-3xl font-extrabold text-blue-800">15+</h3>
@@ -274,7 +312,7 @@ const slides = [
             <p className="text-gray-600">Satisfied Clients</p>
           </div>
           <div>
-            <h3 className="text-3xl font-extrabold text-blue-800">250+</h3>
+            <h3 className="text-3xl font-extrabold text-blue-800">350+</h3>
             <p className="text-gray-600">Fleet Strength</p>
           </div>
         </div>

@@ -1,4 +1,5 @@
-import { useEffect, useState,useMemo  } from "react";
+// src/pages/AdminDashboard.js
+import { useEffect, useState, useMemo } from "react";
 import API from "../api";
 import {
   File,
@@ -16,105 +17,180 @@ export default function AdminDashboard() {
   const [vehicles, setVehicles] = useState([]);
   const [users, setUsers] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [vehicleDetails, setVehicleDetails] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
-const DOC_COLORS = {
-  "RC Book": "from-[#4E7BFF] to-[#2B57E5]",
-  Insurance: "from-[#37B2A4] to-[#1F8E82]",
-  Fitness: "from-[#9C6ADE] to-[#7B4DD8]",
-  Pollution: "from-[#FF9F43] to-[#F77F1E]",
-  "Tamil Nadu Permit": "from-[#E07A97] to-[#D56585]",
-  "Pondicherry Permit": "from-[#5AA8BF] to-[#3F96AF]",
-  "Vehicle Photo": "from-[#555] to-[#222]",
-};
+  const [searchTerm, setSearchTerm] = useState("");
 
- useEffect(() => {
-  // Vehicles
-  API.get("/api/vehicles").then((r) => {
-    const data = Array.isArray(r.data) ? r.data : r.data?.data || [];
-    setVehicles(data);
-  });
+  const DOC_COLORS = {
+    "RC Book": "from-[#4E7BFF] to-[#2B57E5]",
+    Insurance: "from-[#37B2A4] to-[#1F8E82]",
+    Fitness: "from-[#9C6ADE] to-[#7B4DD8]",
+    Pollution: "from-[#FF9F43] to-[#F77F1E]",
+    "Tamil Nadu Permit": "from-[#E07A97] to-[#D56585]",
+    "Pondicherry Permit": "from-[#5AA8BF] to-[#3F96AF]",
+    "Road Tax": "from-[#16A34A] to-[#15803D]",
+    "Vehicle Photo": "from-[#555] to-[#222]",
+  };
 
-  // Users
-  API.get("/api/users").then((r) => {
-    const data = Array.isArray(r.data) ? r.data : r.data?.data || [];
-    setUsers(data);
-  });
-
-  // Documents
-  API.get("/api/documents").then((r) => {
-    const data = Array.isArray(r.data) ? r.data : r.data?.data || [];
-    setDocuments(data);
-  });
-}, []);
-
-
-const getDocPath = (type) => {
-  if (!selectedVehicle || documents.length === 0) return null;
-
-  const doc = documents.find((d) => {
-    const vehicleId = typeof d.vehicle === "object" ? d.vehicle._id : d.vehicle;
-    return d.document_type === type && vehicleId === selectedVehicle;
-  });
-
-  return doc?.file_path ? doc.file_path.replace(/\\/g, "/") : null;
-};
-
-
-
-const vehiclePhotoPath = useMemo(() => getDocPath("Vehicle Photo"), [selectedVehicle, documents]);
-useEffect(() => {
-  console.log("Selected Vehicle:", selectedVehicle);
-  console.log("Documents:", documents);
-  console.log("RC Book Path:", getDocPath("RC Book"));
-}, [selectedVehicle, documents]); // only run when these change
-
-
-  // Handle file upload
-const handleFileUpload = async (file, docType) => {
-  if (!selectedVehicle) {
-    alert("Please select a vehicle first");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("document", file);
-  formData.append("vehicle", selectedVehicle);
-  formData.append("document_type", docType);
-
-  try {
-    setUploading(true);
-    const res = await API.post("/api/documents", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+  // ---------------- FETCH DATA ----------------
+  useEffect(() => {
+    // Vehicles
+    API.get("/api/vehicles").then((r) => {
+      const data = Array.isArray(r.data) ? r.data : r.data?.data || [];
+      setVehicles(data);
     });
-    alert("Upload successful!");
 
-    // **Add uploaded document to state immediately**
-    setDocuments((prevDocs) => [...prevDocs, res.data]);
-  } catch (err) {
-    console.error(err);
-    alert("Upload failed");
-  } finally {
-    setUploading(false);
-  }
-};
+    // Users
+    API.get("/api/users").then((r) => {
+      const data = Array.isArray(r.data) ? r.data : r.data?.data || [];
+      setUsers(data);
+    });
 
+    // Documents
+    API.get("/api/documents").then((r) => {
+      const data = Array.isArray(r.data) ? r.data : r.data?.data || [];
+      setDocuments(data);
+    });
 
-  // Handle preview
-const handlePreview = (filePath) => {
-  const url = filePath.startsWith("http")
-    ? filePath
-    : `${API.defaults.baseURL}/${filePath.replace(/^\/+/, "")}`;
-  setPreviewFile(url);
-};
+    // Pending User Requests
+    fetchPendingUsers();
+  }, []);
 
+  // ---------------- VEHICLE SEARCH ----------------
+  const VEHICLE_REGEX = /^TN\d{2}[A-Z]\d{5}$/;
+
+  const handleVehicleSearch = async () => {
+    const value = searchTerm.trim().toUpperCase();
+
+    if (!VEHICLE_REGEX.test(value)) {
+      alert("Enter full vehicle number (eg: TN16H72666)");
+      clearVehicleUI();
+      return;
+    }
+
+    try {
+      const res = await API.get(`/api/vehicles/search?number=${value}`);
+      const vehicle = res.data;
+
+      setSelectedVehicle(vehicle._id);
+      setVehicleDetails(vehicle);
+
+      setVehicles((prev) => {
+        const exists = prev.find((v) => v._id === vehicle._id);
+        return exists ? prev : [...prev, vehicle];
+      });
+    } catch (err) {
+      alert("Vehicle not found");
+      clearVehicleUI();
+    }
+  };
+
+  const clearVehicleUI = () => {
+    setSelectedVehicle("");
+    setVehicleDetails(null);
+  };
+
+  // ---------------- DOCUMENTS ----------------
+  const getDocPath = (type) => {
+    if (!selectedVehicle || documents.length === 0) return null;
+
+    const doc = documents.find((d) => {
+      const vehicleId = typeof d.vehicle === "object" ? d.vehicle._id : d.vehicle;
+      return d.document_type === type && vehicleId === selectedVehicle;
+    });
+
+    return doc?.file_path ? doc.file_path.replace(/\\/g, "/") : null;
+  };
+
+  const vehiclePhotoPath = useMemo(() => getDocPath("Vehicle Photo"), [selectedVehicle, documents]);
+
+  const getVehicleDocument = (docType) => {
+    if (!selectedVehicle) return null;
+
+    return documents.find((d) => {
+      const vehicleId = typeof d.vehicle === "object" ? d.vehicle._id : d.vehicle;
+      return d.document_type === docType && vehicleId === selectedVehicle;
+    });
+  };
+
+  const getExpiryDate = (docType) => {
+    if (!vehicleDetails) return "—";
+
+    const map = {
+      "RC Book": vehicleDetails.rc_expiry,
+      Insurance: vehicleDetails.insurance_expiry,
+      Fitness: vehicleDetails.fitness_expiry,
+      Pollution: vehicleDetails.pollution_expiry,
+      "Tamil Nadu Permit": vehicleDetails.tn_permit_expiry,
+      "Pondicherry Permit": vehicleDetails.py_permit_expiry,
+      "Road Tax": vehicleDetails.road_tax_expiry,
+    };
+
+    const date = map[docType];
+    if (!date) return "—";
+
+    return new Date(date).toLocaleDateString("en-GB");
+  };
+
+  const handleFileUpload = async (file, docType) => {
+    if (!selectedVehicle) {
+      alert("Please select a vehicle first");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("document", file);
+    formData.append("vehicle", selectedVehicle);
+    formData.append("document_type", docType);
+
+    try {
+      setUploading(true);
+      const res = await API.post("/api/documents", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      alert("Upload successful!");
+      setDocuments((prevDocs) => [...prevDocs, res.data]);
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePreview = (filePath) => {
+    const url = filePath.startsWith("http")
+      ? filePath
+      : `${API.defaults.baseURL}/${filePath.replace(/^\/+/, "")}`;
+    setPreviewFile(url);
+  };
+
+  // ---------------- PENDING USERS ----------------
+  const fetchPendingUsers = async () => {
+    try {
+      const res = await API.get("/api/admin/user-requests");
+      setPendingUsers(res.data);
+    } catch (err) {
+      console.error("Error fetching pending users:", err);
+    }
+  };
+
+  const approveUser = async (id) => {
+    try {
+      await API.put(`/api/admin/approve-user/${id}`);
+      fetchPendingUsers();
+    } catch (err) {
+      console.error("Error approving user:", err);
+    }
+  };
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-[#F4F6FF] via-[#EEF1FA] to-[#E9EDFF]">
-      <Sidebar />
+      <Sidebar pendingRequests={pendingUsers.length} />
 
       <main className="flex-1 px-10 py-8">
         {/* TOP BAR */}
@@ -125,7 +201,6 @@ const handlePreview = (filePath) => {
             placeholder="Search vehicle by number..."
             className="w-[440px] px-6 py-3 rounded-2xl bg-white shadow-lg outline-none"
           />
-
           <div className="flex items-center gap-3 bg-white px-5 py-2 rounded-full shadow-lg">
             <img
               src="https://i.pravatar.cc/40"
@@ -149,7 +224,7 @@ const handlePreview = (filePath) => {
             label="Total Users"
             value={users.length}
           />
-        <Stat
+          <Stat
             color="from-[#9C6ADE] to-[#7B4DD8]"
             icon={<File />}
             label="Total Documents"
@@ -168,25 +243,27 @@ const handlePreview = (filePath) => {
           {/* VEHICLE DETAILS */}
           <div className="bg-white rounded-3xl shadow-2xl p-8">
             <h2 className="text-lg font-semibold mb-6">Vehicle Details</h2>
+
+            {/* SEARCH TOOL */}
             <div className="mb-6">
-              <p className="text-gray-500 mb-1">Select Vehicle</p>
-              <select
-                value={selectedVehicle}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setSelectedVehicle(id);
-                  const found = vehicles.find((v) => v._id === id);
-                  setVehicleDetails(found || null);
-                }}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 border"
-              >
-                <option value="">-- Select Vehicle --</option>
-                {vehicles.map((v) => (
-                  <option key={v._id} value={v._id}>
-                    {v.vehicle_number}
-                  </option>
-                ))}
-              </select>
+              <p className="text-gray-500 mb-1">Search Vehicle Number</p>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  placeholder="Enter full vehicle number (TN16H72666)"
+                  value={searchTerm}
+                  maxLength={10}
+                  onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === "Enter" && handleVehicleSearch()}
+                  className="flex-1 px-4 py-3 rounded-xl bg-gray-50 border"
+                />
+                <button
+                  onClick={handleVehicleSearch}
+                  className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700"
+                >
+                  Search
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4 text-sm">
@@ -201,26 +278,38 @@ const handlePreview = (filePath) => {
           {/* DOCUMENT UPLOAD */}
           <div>
             <h2 className="text-lg font-semibold mb-4">Documents Upload</h2>
-
             <div className="grid grid-cols-2 gap-8 min-w-[520px]">
               {[
-                { title: "RC Book", color: "linear-gradient(135deg, #5B7CFA 0%, #4E6EEA 100%)", icon: <File className="text-white" size={20} />, expiry: "01/01/2024" },
-                { title: "Insurance", color: "linear-gradient(135deg, #6FB1A6 0%, #4FA295 100%)", icon: <ShieldCheck className="text-white" size={20}/>, expiry: "15/11/2024" },
-                { title: "Fitness", color: "linear-gradient(135deg, #9C6ADE 0%, #8B58CF 100%)", icon: <BadgeCheck className="text-white" size={20} />, expiry: "01/08/2024" },
-                { title: "Pollution", color: "linear-gradient(135deg, #F2A35C 0%, #E88A3C 100%)", icon: <File className="text-white" size={20} />, expiry: "10/12/2024" },
-                { title: "Tamil Nadu Permit", color: "linear-gradient(135deg, #E07A97 0%, #D56585 100%)", icon: <File className="text-white" size={20}/>, expiry: "05/09/2024" },
-                { title: "Pondicherry Permit", color: "linear-gradient(135deg, #5AA8BF 0%, #3F96AF 100%)", icon: <File className="text-white" size={20}/>, expiry: "20/11/2024" },
-                { title: "Vehicle Photo", color: "linear-gradient(135deg, #444 0%, #111 100%)", icon: <File className="text-white" size={20}/>, expiry: "—" }
-              ].map((doc) => (
+                "RC Book",
+                "Insurance",
+                "Fitness",
+                "Pollution",
+                "Tamil Nadu Permit",
+                "Pondicherry Permit",
+                "Road Tax",
+                "Vehicle Photo",
+              ].map((title) => (
                 <DocCard
-                  key={doc.title}
-                  title={doc.title}
-                  color={doc.color}
-                  icon={doc.icon}
-                  expiryDate={doc.expiry}
-                  onUpload={(file) => handleFileUpload(file, doc.title)}
+                  key={title}
+                  title={title}
+                  color={`linear-gradient(135deg, ${
+                    DOC_COLORS[title]?.split(" ")[0]?.replace("from-[", "").replace("]", "")
+                  } 0%, ${
+                    DOC_COLORS[title]?.split(" ")[1]?.replace("to-[", "").replace("]", "")
+                  } 100%)`}
+                  icon={
+                    title === "Insurance" ? (
+                      <ShieldCheck className="text-white" size={20} />
+                    ) : title === "Fitness" ? (
+                      <BadgeCheck className="text-white" size={20} />
+                    ) : (
+                      <File className="text-white" size={20} />
+                    )
+                  }
+                  expiryDate={getExpiryDate(title)}
+                  onUpload={(file) => handleFileUpload(file, title)}
                   onPreview={() => {
-                    const path = getDocPath(doc.title);
+                    const path = getDocPath(title);
                     if (!path) return alert("No file uploaded");
                     handlePreview(path);
                   }}
@@ -252,46 +341,80 @@ const handlePreview = (filePath) => {
                 )}
               </div>
             </div>
-
-            {/* PREVIEW MODAL */}
-            {previewFile && (
-              <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-                <div className="bg-white rounded-xl p-4 max-w-3xl w-full max-h-[80vh] relative overflow-auto">
-                  <button
-                    className="absolute top-2 right-2 text-gray-600 text-xl font-bold"
-                    onClick={() => setPreviewFile(null)}
-                  >
-                    ✕
-                  </button>
-
-                  {/\.(jpg|jpeg|png|webp)$/i.test(previewFile) && (
-                    <img src={previewFile} alt="Preview" className="w-full object-contain rounded-xl" />
-                  )}
-
-                  {previewFile.endsWith(".pdf") && (
-                    <iframe src={previewFile} title="PDF Preview" className="w-full h-[80vh] rounded-xl" />
-                  )}
-
-                  {!/\.(jpg|jpeg|png|webp|pdf)$/i.test(previewFile) && (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      Preview not supported.{" "}
-                      <a href={previewFile} target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 underline">
-                        Download file
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
+
+        {/* ---------------- PENDING USER REQUESTS ---------------- */}
+        <div className="bg-white rounded-3xl shadow-2xl p-8 mt-10" id="user-requests">
+          <h2 className="text-lg font-semibold mb-4">Pending User Requests</h2>
+
+          {pendingUsers.length === 0 ? (
+            <p>No pending requests</p>
+          ) : (
+            <table className="w-full table-auto border-collapse border">
+              <thead>
+                <tr>
+                  <th className="border px-4 py-2">Name</th>
+                  <th className="border px-4 py-2">Email</th>
+                  <th className="border px-4 py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingUsers.map((user) => (
+                  <tr key={user._id}>
+                    <td className="border px-4 py-2">{user.name}</td>
+                    <td className="border px-4 py-2">{user.email}</td>
+                    <td className="border px-4 py-2">
+                      <button
+                        onClick={() => approveUser(user._id)}
+                        className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                      >
+                        Approve
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* ---------------- PREVIEW MODAL ---------------- */}
+        {previewFile && (
+          <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-xl p-4 max-w-3xl w-full max-h-[80vh] relative overflow-auto">
+              <button
+                className="absolute top-2 right-2 text-gray-600 text-xl font-bold"
+                onClick={() => setPreviewFile(null)}
+              >
+                ✕
+              </button>
+
+              {/\.(jpg|jpeg|png|webp)$/i.test(previewFile) && (
+                <img src={previewFile} alt="Preview" className="w-full object-contain rounded-xl" />
+              )}
+
+              {previewFile.endsWith(".pdf") && (
+                <iframe src={previewFile} title="PDF Preview" className="w-full h-[80vh] rounded-xl" />
+              )}
+
+              {!/\.(jpg|jpeg|png|webp|pdf)$/i.test(previewFile) && (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Preview not supported.{" "}
+                  <a href={previewFile} target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 underline">
+                    Download file
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 }
 
 /* ---------------- COMPONENTS ---------------- */
-
 const Stat = ({ color, icon, label, value }) => (
   <div className={`bg-gradient-to-r ${color} rounded-2xl px-6 py-5 flex items-center gap-4 shadow-lg`}>
     <div className="bg-white/20 p-3 rounded-xl text-white">{icon}</div>
@@ -308,36 +431,19 @@ const Input = ({ label, value }) => (
     <input value={value} disabled className="w-full px-4 py-3 rounded-xl bg-gray-50 border" />
   </div>
 );
+
 const DocCard = ({ title, color, icon, expiryDate, onUpload, onPreview, uploading }) => (
   <div className="rounded-2xl shadow-lg overflow-hidden">
-    
-    {/* COLORED TOP */}
-    <div
-      className="px-4 py-3 flex flex-col gap-2"
-      style={{ background: color }}
-    >
-      {/* HEADER */}
+    <div className="px-4 py-3 flex flex-col gap-2" style={{ background: color }}>
       <div className="flex items-center gap-3">
-        <div className="bg-white/20 p-2 rounded-lg flex items-center justify-center">
-          {icon}
-        </div>
-        <h3 className="font-semibold text-white text-sm">
-          {title}
-        </h3>
+        <div className="bg-white/20 p-2 rounded-lg flex items-center justify-center">{icon}</div>
+        <h3 className="font-semibold text-white text-sm">{title}</h3>
       </div>
-
-      {/* ACTION BUTTONS */}
       <div className="flex w-full gap-2 mt-2">
-        <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#2563EB] hover:bg-[#1E40AF] text-white rounded-lg text-xs font-medium cursor-pointer transition shadow-sm"
->
+        <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#2563EB] hover:bg-[#1E40AF] text-white rounded-lg text-xs font-medium cursor-pointer transition shadow-sm">
           <Upload size={14} /> {uploading ? "Uploading..." : "Upload"}
-          <input
-            type="file"
-            hidden
-            onChange={(e) => e.target.files[0] && onUpload(e.target.files[0])}
-          />
+          <input type="file" hidden onChange={(e) => e.target.files[0] && onUpload(e.target.files[0])} />
         </label>
-
         <button
           type="button"
           className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/20 text-white rounded-lg text-xs font-medium hover:bg-white/30 transition"
@@ -347,12 +453,8 @@ const DocCard = ({ title, color, icon, expiryDate, onUpload, onPreview, uploadin
         </button>
       </div>
     </div>
-
-    {/* EXPIRY */}
     <div className="px-4 py-2 bg-white text-gray-800 text-xs font-medium">
       Expiry Date: <span className="font-semibold">{expiryDate}</span>
     </div>
   </div>
 );
-
-

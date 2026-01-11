@@ -7,7 +7,17 @@ export default function CreateVehicle({ onCreated }) {
     rto: "",
     wheel: "",
     chassisNo: "",
-    status: "Active"
+    status: "Active",
+
+    rcExpiry: "",
+    insuranceExpiry: "",
+    fitnessExpiry: "",
+    pollutionExpiry: "",
+
+    // ✅ NEW
+    tnPermitExpiry: "",
+    pyPermitExpiry: "",
+    roadTaxExpiry: ""
   });
 
   const handleChange = (e) =>
@@ -26,7 +36,16 @@ export default function CreateVehicle({ onCreated }) {
       rto: "",
       wheel: "",
       chassisNo: "",
-      status: "Active"
+      status: "Active",
+
+      rcExpiry: "",
+      insuranceExpiry: "",
+      fitnessExpiry: "",
+      pollutionExpiry: "",
+
+      tnPermitExpiry: "",
+      pyPermitExpiry: "",
+      roadTaxExpiry: ""
     });
   };
 
@@ -35,6 +54,7 @@ export default function CreateVehicle({ onCreated }) {
       <h2 className="text-lg font-semibold mb-6">Create Vehicle</h2>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-4 gap-6">
+        {/* BASIC DETAILS */}
         <Input
           label="Vehicle Number"
           name="vehicleNumber"
@@ -63,6 +83,65 @@ export default function CreateVehicle({ onCreated }) {
           onChange={handleChange}
         />
 
+        {/* EXPIRY DETAILS */}
+        <Input
+          label="RC Expiry Date"
+          type="date"
+          name="rcExpiry"
+          value={form.rcExpiry}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="Insurance Expiry Date"
+          type="date"
+          name="insuranceExpiry"
+          value={form.insuranceExpiry}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="Fitness Expiry Date"
+          type="date"
+          name="fitnessExpiry"
+          value={form.fitnessExpiry}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="Pollution Expiry Date"
+          type="date"
+          name="pollutionExpiry"
+          value={form.pollutionExpiry}
+          onChange={handleChange}
+        />
+
+        {/* ✅ NEW PERMIT & TAX */}
+        <Input
+          label="Tamil Nadu Permit Expiry"
+          type="date"
+          name="tnPermitExpiry"
+          value={form.tnPermitExpiry}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="Pondicherry Permit Expiry"
+          type="date"
+          name="pyPermitExpiry"
+          value={form.pyPermitExpiry}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="Road Tax Expiry"
+          type="date"
+          name="roadTaxExpiry"
+          value={form.roadTaxExpiry}
+          onChange={handleChange}
+        />
+
+        {/* STATUS */}
         <div>
           <label className="text-sm text-gray-500">Status</label>
           <select
@@ -76,6 +155,7 @@ export default function CreateVehicle({ onCreated }) {
           </select>
         </div>
 
+        {/* SUBMIT */}
         <div className="col-span-4 flex justify-end">
           <button className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700">
             Create Vehicle
@@ -86,6 +166,9 @@ export default function CreateVehicle({ onCreated }) {
   );
 }
 
+/* ===========================
+   INPUT COMPONENT
+=========================== */
 const Input = ({ label, ...props }) => (
   <div>
     <label className="text-sm text-gray-500">{label}</label>

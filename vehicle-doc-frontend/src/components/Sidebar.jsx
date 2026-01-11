@@ -1,14 +1,29 @@
+import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Home, Car, FileText, Users, Bell, Settings, LogOut } from "lucide-react";
+import API from "../api"; // make sure this points to your axios instance
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const [pendingRequests, setPendingRequests] = useState(0);
+
+  // Fetch pending user requests
+  useEffect(() => {
+    const fetchPendingRequests = async () => {
+      try {
+        const res = await API.get("/api/admin/user-requests"); // backend route returning users with isApproved: false
+        setPendingRequests(res.data.length);
+      } catch (err) {
+        console.error("Failed to fetch pending requests:", err);
+      }
+    };
+
+    fetchPendingRequests();
+  }, []);
 
   const handleLogout = () => {
-    // Clear token or user info
-    localStorage.removeItem("token"); // adjust if using different key
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
-    // Redirect to login
     navigate("/login");
   };
 
@@ -17,8 +32,15 @@ const Sidebar = () => {
     { icon: <Car size={18} />, label: "Vehicles", to: "/vehicles" },
     { icon: <FileText size={18} />, label: "Documents", to: "/documents" },
     { icon: <Users size={18} />, label: "Users", to: "/users" },
-    { icon: <Bell size={18} />, label: "Expiry Alerts", badge: "5" },
-    { icon: <Settings size={18} />, label: "Settings", to: "/settings" },
+{ 
+  icon: <Bell size={18} />, 
+  label: "User Requests", 
+  onClick: () => {
+    document.getElementById('user-requests')?.scrollIntoView({ behavior: 'smooth' });
+  },
+  badge: pendingRequests
+}
+,    { icon: <Settings size={18} />, label: "Settings", to: "/settings" },
     { icon: <LogOut size={18} />, label: "Logout", onClick: handleLogout },
   ];
 
@@ -56,12 +78,10 @@ export default Sidebar;
 const SideItem = ({ icon, label, to, active, badge, onClick }) => {
   const baseClass =
     "flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-300 group";
- const activeClass =
-  "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg";
-
+  const activeClass =
+    "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg";
   const hoverClass =
-  "hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-500 hover:text-white";
-
+    "hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-500 hover:text-white";
 
   if (to) {
     return (
@@ -71,9 +91,8 @@ const SideItem = ({ icon, label, to, active, badge, onClick }) => {
           `${baseClass} ${isActive || active ? activeClass : hoverClass}`
         }
       >
-       <span className="text-white group-hover:text-violet-200 transition">{icon}</span>
-<span className="flex-1 truncate text-white group-hover:text-violet-200 transition">{label}</span>
-
+        <span className="text-white group-hover:text-violet-200 transition">{icon}</span>
+        <span className="flex-1 truncate text-white group-hover:text-violet-200 transition">{label}</span>
         {badge && (
           <span className="bg-pink-500 text-[11px] px-2 py-0.5 rounded-full">{badge}</span>
         )}
@@ -84,7 +103,7 @@ const SideItem = ({ icon, label, to, active, badge, onClick }) => {
   return (
     <div
       className={`${baseClass} ${active ? activeClass : hoverClass}`}
-      onClick={onClick} // Handle logout click
+      onClick={onClick}
     >
       <span className="text-violet-200 group-hover:text-white transition">{icon}</span>
       <span className="flex-1 truncate group-hover:text-white transition">{label}</span>

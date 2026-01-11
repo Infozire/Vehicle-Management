@@ -12,6 +12,11 @@ const userSchema = new mongoose.Schema(
     enum: ["user", "admin"], 
     default: "user"  // ✅ default role
   },
+  isApproved: {
+  type: Boolean,
+  default: false, // New users are unapproved by default
+},
+
     savedPosts: [
       {
         title: String,

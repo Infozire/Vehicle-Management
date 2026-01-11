@@ -11,6 +11,7 @@ import userRoutes from "./routes/userRoutes.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
 import authRoutes from "./routes/auth.js";
+import adminRoutes from "./routes/admin.js";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/auth", authRoutes); // ✅ router only
+app.use("/api/admin", adminRoutes); // <-- new admin routes
 
 // MongoDB Connection
 connectDB();

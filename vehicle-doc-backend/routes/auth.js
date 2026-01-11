@@ -33,12 +33,13 @@ router.post("/register", async (req, res) => {
       email,
       password: hashedPassword,
       role: userRole, // store role properly
+      isApproved: false
     });
 
     await newUser.save();
 
     const token = jwt.sign(
-      { id: newUser._id ,role:userRole},
+      { id: newUser._id, role: userRole },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -81,7 +82,7 @@ router.post("/login", async (req, res) => {
     );
 
     res.status(200).json({
-      user: { name: user.name, email: user.email, company: user.company ,role: user.role, },
+      user: { name: user.name, email: user.email, company: user.company, role: user.role, isApproved: user.isApproved },
       token,
     });
   } catch (err) {
