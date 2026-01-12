@@ -4,7 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import VehicleSearch from "./components/VehicleSearch";
+import VehicleSearch from "./pages/VehicleSearch";
 import CreateVehicle from "./pages/CreateVehicle";
 import VehiclesPage from "./pages/VehiclesPage";
 import UsersPage from "./pages/UsersPage";

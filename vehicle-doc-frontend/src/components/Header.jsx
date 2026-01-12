@@ -24,7 +24,16 @@ export default function Header() {
     "absolute top-full left-0 mt-1 bg-white text-black rounded shadow-lg w-52 py-2 z-50 origin-top transition-all duration-300 ease-in-out transform";
 
   const goToService = (service) => {
-    const route = service.toLowerCase().replace(/\s+/g, "-");
+    // Map service names to their actual routes
+    const routeMap = {
+      "Dhanush Mines": "dhanush-mines",
+      "Blue Metal": "spr-bluemetal",
+      "SPR Transport": "spr-transport",
+      "SPR Motors": "spr-motors",
+      "SPR JK Tyres": "spr-jk-tyres",
+      "SPR Paradise": "spr-paradise",
+    };
+    const route = routeMap[service] || service.toLowerCase().replace(/\s+/g, "-");
     navigate(`/services/${route}`);
     setMobileOpen(false); // close mobile menu
   };
