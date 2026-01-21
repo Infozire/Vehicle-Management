@@ -1,4 +1,3 @@
-// src/pages/AdminDashboard.js
 import { useEffect, useState, useMemo } from "react";
 import API from "../api";
 import {
@@ -24,6 +23,7 @@ export default function AdminDashboard() {
   const [uploading, setUploading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentUser, setCurrentUser] = useState(null); // ✅ Current logged-in user
 
   const DOC_COLORS = {
     "RC Book": "from-[#4E7BFF] to-[#2B57E5]",
@@ -36,108 +36,84 @@ export default function AdminDashboard() {
     "Vehicle Photo": "from-[#555] to-[#222]",
   };
 
-  // ---------------- FETCH DATA ----------------
+  // ---------------- LOAD INITIAL DATA ----------------
   useEffect(() => {
-    // Vehicles
+    // Load current user from localStorage
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser) setCurrentUser(storedUser);
+
+    // Fetch Vehicles
     API.get("/api/vehicles").then((r) => {
       const data = Array.isArray(r.data) ? r.data : r.data?.data || [];
       setVehicles(data);
     });
 
-    // Users
+    // Fetch Users
     API.get("/api/users").then((r) => {
       const data = Array.isArray(r.data) ? r.data : r.data?.data || [];
       setUsers(data);
     });
 
-    // Documents
+    // Fetch Documents
     API.get("/api/documents").then((r) => {
       const data = Array.isArray(r.data) ? r.data : r.data?.data || [];
       setDocuments(data);
     });
 
-    // Pending User Requests
+    // Fetch Pending User Requests
     fetchPendingUsers();
   }, []);
 
+  // ---------------- LISTEN FOR LOCALSTORAGE CHANGES ----------------
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      setCurrentUser(storedUser);
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   // ---------------- VEHICLE SEARCH ----------------
-  const VEHICLE_REGEX = /^TN\d{2}[A-Z]\d{5}$/;
+  const handleVehicleSearch = async () => {
+    const value = searchTerm.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().trim();
+    if (!value) {
+      alert("Enter vehicle number");
+      clearVehicleUI();
+      return;
+    }
 
-const handleVehicleSearch = async () => {
-  const value = searchTerm
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .toUpperCase()
-    .trim();
-
-  if (!value) {
-    alert("Enter vehicle number");
-    clearVehicleUI();
-    return;
-  }
-
-  try {
-    const res = await API.get(
-      `/api/vehicles/search?number=${value}`
-    );
-
-    const vehicle = res.data;
-    setSelectedVehicle(vehicle._id);
-    setVehicleDetails(vehicle);
-
-  } catch (err) {
-    alert(
-      err?.response?.data?.message || "Vehicle not found"
-    );
-    clearVehicleUI();
-  }
-};
-
+    try {
+      const res = await API.get(`/api/vehicles/search?number=${value}`);
+      const vehicle = res.data;
+      setSelectedVehicle(vehicle._id);
+      setVehicleDetails(vehicle);
+    } catch (err) {
+      alert(err?.response?.data?.message || "Vehicle not found");
+      clearVehicleUI();
+    }
+  };
 
   const clearVehicleUI = () => {
     setSelectedVehicle("");
     setVehicleDetails(null);
   };
 
-  // ---------------- DOCUMENTS ----------------
- const getDocPath = (type) => {
-  if (!selectedVehicle || documents.length === 0) return null;
+  // ---------------- DOCUMENT HELPERS ----------------
+  const getDocPath = (type) => {
+    if (!selectedVehicle || documents.length === 0) return null;
 
-  const doc = documents.find((d) => {
-    if (!d || !d.vehicle) return false; // ✅ CRITICAL GUARD
+    const doc = documents.find((d) => {
+      if (!d || !d.vehicle) return false;
 
-    const vehicleId =
-      typeof d.vehicle === "object" ? d.vehicle?._id : d.vehicle;
+      const vehicleId = typeof d.vehicle === "object" ? d.vehicle?._id : d.vehicle;
+      return d.document_type === type && vehicleId === selectedVehicle;
+    });
 
-    return (
-      d.document_type === type &&
-      vehicleId === selectedVehicle
-    );
-  });
-
-  return doc?.file_path
-    ? doc.file_path.replace(/\\/g, "/")
-    : null;
-};
-
+    return doc?.file_path ? doc.file_path.replace(/\\/g, "/") : null;
+  };
 
   const vehiclePhotoPath = useMemo(() => getDocPath("Vehicle Photo"), [selectedVehicle, documents]);
-
-const getVehicleDocument = (docType) => {
-  if (!selectedVehicle) return null;
-
-  return documents.find((d) => {
-    if (!d || !d.vehicle) return false; // ✅ SAFETY
-
-    const vehicleId =
-      typeof d.vehicle === "object" ? d.vehicle?._id : d.vehicle;
-
-    return (
-      d.document_type === docType &&
-      vehicleId === selectedVehicle
-    );
-  });
-};
-
 
   const getExpiryDate = (docType) => {
     if (!vehicleDetails) return "—";
@@ -225,13 +201,19 @@ const getVehicleDocument = (docType) => {
           />
           <div className="flex items-center gap-3 bg-white px-5 py-2 rounded-full shadow-lg">
             <img
-              src="https://i.pravatar.cc/40"
+              src={
+                currentUser?.photo
+                  ? `${API.defaults.baseURL}/${currentUser.photo}`
+                  : "https://i.pravatar.cc/40"
+              }
               className="rounded-full w-9 h-9"
+              alt="User Avatar"
             />
-            <span className="text-sm font-medium">Admin</span>
+            <span className="text-sm font-medium">
+              {currentUser?.name || "Admin"}
+            </span>
           </div>
         </div>
-
         {/* STATS */}
         <div className="grid grid-cols-4 gap-6 mb-12">
           <Stat

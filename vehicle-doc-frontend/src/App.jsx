@@ -18,7 +18,7 @@ import SPRMotors from "./pages/services/SPRMotors";
 import SPRJKTyres from "./pages/services/SPRJKTyres";
 import SPRParadise from "./pages/services/SPRParadise";
 import BlueMetal from "./pages/services/BlueMetal";
-
+import Settings from "./pages/Settings";
 // About Pages
 import AboutHistory from "./pages/about/History";
 import AboutVision from "./pages/about/Vision";
@@ -97,6 +97,7 @@ export default function App() {
         {/* ABOUT */}
         <Route path="/about/history" element={<AboutHistory />} />
         <Route path="/about/vision" element={<AboutVision />} />
+<Route path="/settings" element={<Settings />} />
 
         {/* CONTACT */}
         <Route path="/contact" element={<Contact />} />

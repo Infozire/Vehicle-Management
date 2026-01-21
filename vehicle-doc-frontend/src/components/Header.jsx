@@ -28,8 +28,8 @@ export default function Header({ showLogout = false } = {}) {
   /* =====================
      COMMON STYLES
   ====================== */
-  const navItemClass =
-    "px-4 py-2 flex items-center gap-1 cursor-pointer font-extrabold text-white hover:text-yellow-300 transition-colors duration-200";
+ const navItemClass =
+  "px-4 py-2 flex items-center gap-1 cursor-pointer font-extrabold text-[#0B1B3A] hover:text-[#7A4421] transition-colors duration-200";
 
   const dropdownClass =
     "absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl w-56 py-2 z-50 origin-top transition-all duration-300 ease-in-out transform border border-gray-100";
@@ -61,7 +61,7 @@ export default function Header({ showLogout = false } = {}) {
       <div
         className="h-20 px-6 md:px-10 flex items-center justify-between relative"
         style={{
-          background: "linear-gradient(135deg, #0B1B3A 0%, #1a2f5a 50%, #7A4421 100%)",
+          background: "#ffff",
           boxShadow: "0 4px 20px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1)"
         }}
       >
@@ -75,7 +75,7 @@ export default function Header({ showLogout = false } = {}) {
             alt="SPR Logo" 
             className="h-20 md:h-32 transition-transform duration-300 group-hover:scale-105" 
           />
-          <span className="text-2xl font-extrabold text-white drop-shadow-lg">
+          <span className="text-2xl font-extrabold text-[#0B1B3A] drop-shadow-lg">
             GROUPS
           </span>
         </div>
@@ -84,7 +84,7 @@ export default function Header({ showLogout = false } = {}) {
         <div className="md:hidden">
           <button 
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="text-white hover:text-yellow-300 transition-colors"
+            className="text-[#0B1B3A] hover:text-[#7A4421] transition-colors"
           >
             {mobileOpen ? <X size={28} /> : <Menu size={28} />}
           </button>

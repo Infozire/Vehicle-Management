@@ -44,3 +44,35 @@ export const approveUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+export const updateMyProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.email) user.email = req.body.email;
+
+    if (req.file) {
+      user.profileImage = req.file.path.replace(/\\/g, "/");
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        profileImage: user.profileImage,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("Profile update error:", err);
+    res.status(500).json({ message: "Profile update failed" });
+  }
+};
