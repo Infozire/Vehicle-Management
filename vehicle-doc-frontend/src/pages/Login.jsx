@@ -3,12 +3,13 @@ import React, { useState } from "react";
 import API from "../api";
 import { useNavigate, Link } from "react-router-dom";
 import Header from "../components/Header";
-import { Eye, EyeOff } from "lucide-react"; // <- import eye icons
+import { Eye, EyeOff } from "lucide-react";
+import bgImage from "../assets/bgImage.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // <- new state
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -33,46 +34,86 @@ export default function Login() {
   return (
     <>
       <Header />
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow w-96">
-          <h2 className="text-2xl font-bold mb-4">Login</h2>
+      <div 
+        className="min-h-screen flex items-center justify-center relative py-12 px-4"
+        style={{
+          backgroundImage: `url(${bgImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      >
+        {/* Overlay for better readability */}
+        <div className="absolute inset-0 bg-black/40"></div>
+        
+        {/* Login Form Card */}
+        <div className="relative z-10 w-full max-w-md">
+          <form 
+            onSubmit={handleSubmit} 
+            className="bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-white/20"
+          >
+            <h2 className="text-3xl font-bold mb-6 text-center" style={{ color: "#7A4421" }}>
+              Login
+            </h2>
 
-          {error && <p className="text-red-500 mb-3">{error}</p>}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-sm text-center">{error}</p>
+              </div>
+            )}
 
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full border px-3 py-2 mb-3"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+            <div className="mb-4">
+              <input
+                type="email"
+                placeholder="Email"
+                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#7A4421] focus:ring-2 focus:ring-[#7A4421]/30 transition"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-          {/* Password input with eye icon */}
-          <div className="relative mb-4">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              className="w-full border px-3 py-2 pr-10" // padding for icon
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              className="absolute right-2 top-2.5 text-gray-500"
-              onClick={() => setShowPassword(!showPassword)}
+            {/* Password input with eye icon */}
+            <div className="relative mb-6">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-[#7A4421] focus:ring-2 focus:ring-[#7A4421]/30 transition"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-3.5 text-gray-500 hover:text-gray-700 transition"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+              style={{ backgroundColor: "#7A4421" }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = "#6a3a1a"}
+              onMouseLeave={(e) => e.target.style.backgroundColor = "#7A4421"}
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              Login
             </button>
-          </div>
 
-          <button className="w-full bg-blue-600 text-white py-2 rounded">
-            Login
-          </button>
-
-          <p className="mt-4 text-sm text-center">
-            Don’t have an account? <Link to="/register" className="text-blue-600">Register</Link>
-          </p>
-        </form>
+            <p className="mt-6 text-sm text-center text-gray-600">
+              Don't have an account?{" "}
+              <Link 
+                to="/register" 
+                className="font-semibold hover:underline transition"
+                style={{ color: "#7A4421" }}
+              >
+                Register
+              </Link>
+            </p>
+          </form>
+        </div>
       </div>
     </>
   );

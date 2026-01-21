@@ -58,7 +58,7 @@ export default function VehicleSearch() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header showLogout />
 
       {/* Hero / User Bar */}
       <section className="relative overflow-hidden">

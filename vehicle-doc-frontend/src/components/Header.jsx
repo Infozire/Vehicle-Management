@@ -1,30 +1,46 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import sprLogo from "../assets/sprlogo1.png"; // your logo
+import sprLogo from "../assets/sprlogo1.png";
 import { ChevronDown, LogOut, Menu, X } from "lucide-react";
 
-export default function Header() {
+export default function Header({ showLogout = false } = {}) {
   const navigate = useNavigate();
+
   const [servicesOpen, setServicesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false); // Mobile menu toggle
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Disable body scroll when modal open
+  const servicesTimerRef = useRef(null);
+
   useEffect(() => {
-    if (showLoginModal) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "auto";
-  }, [showLoginModal]);
+    if (!showLogout) return;
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, [showLogout]);
 
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsLoggedIn(false);
+    navigate("/login");
+  };
+
+  /* =====================
+     COMMON STYLES
+  ====================== */
   const navItemClass =
-    "px-4 py-2 flex items-center gap-1 cursor-pointer hover:text-white transition font-extrabold";
+    "px-4 py-2 flex items-center gap-1 cursor-pointer font-extrabold text-white hover:text-yellow-300 transition-colors duration-200";
 
   const dropdownClass =
-    "absolute top-full left-0 mt-1 bg-white text-black rounded shadow-lg w-52 py-2 z-50 origin-top transition-all duration-300 ease-in-out transform";
+    "absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl w-56 py-2 z-50 origin-top transition-all duration-300 ease-in-out transform border border-gray-100";
+
+  const dropdownItemClass =
+    "px-4 py-2 cursor-pointer font-semibold text-[#0B1B3A] hover:bg-[#7A4421] hover:text-white transition-colors duration-200";
+
+  const mobileItemClass =
+    "px-2 py-2 font-bold text-white hover:bg-white/20 rounded cursor-pointer transition-colors duration-200";
 
   const goToService = (service) => {
-    // Map service names to their actual routes
     const routeMap = {
       "Dhanush Mines": "dhanush-mines",
       "Blue Metal": "spr-bluemetal",
@@ -33,89 +49,77 @@ export default function Header() {
       "SPR JK Tyres": "spr-jk-tyres",
       "SPR Paradise": "spr-paradise",
     };
-    const route = routeMap[service] || service.toLowerCase().replace(/\s+/g, "-");
-    navigate(`/services/${route}`);
-    setMobileOpen(false); // close mobile menu
-  };
+    const route =
+      routeMap[service] || service.toLowerCase().replace(/\s+/g, "-");
 
-  const handleVehicleSearch = () => {
-    const token = localStorage.getItem("token");
-    if (!token) setShowLoginModal(true);
-    else navigate("/vehicleSearch");
+    navigate(`/services/${route}`);
+    setMobileOpen(false);
   };
 
   return (
     <header className="w-full sticky top-0 z-50">
       <div
-        className="h-20 px-6 md:px-10 flex items-center justify-between text-white relative"
+        className="h-20 px-6 md:px-10 flex items-center justify-between relative"
         style={{
-          background: "#FFFFFF",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          background: "linear-gradient(135deg, #0B1B3A 0%, #1a2f5a 50%, #7A4421 100%)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1)"
         }}
       >
-        {/* Logo */}
+        {/* LOGO */}
         <div
-          className="flex items-center cursor-pointer gap-2"
+          className="flex items-center gap-2 cursor-pointer group"
           onClick={() => navigate("/")}
         >
-          <img
-            src={sprLogo}
-            alt="SPR Logo"
-            className="h-20 w-auto md:h-32 lg:h-36"
+          <img 
+            src={sprLogo} 
+            alt="SPR Logo" 
+            className="h-20 md:h-32 transition-transform duration-300 group-hover:scale-105" 
           />
-          <span
-            className="text-2xl font-extrabold text-white"
-            style={{ color: "#7A4421" }}
-          >
+          <span className="text-2xl font-extrabold text-white drop-shadow-lg">
             GROUPS
           </span>
         </div>
 
-        {/* Hamburger for Mobile */}
-        <div className="md:hidden flex items-center">
-          <button
+        {/* MOBILE MENU ICON */}
+        <div className="md:hidden">
+          <button 
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="text-black focus:outline-none"
+            className="text-white hover:text-yellow-300 transition-colors"
           >
             {mobileOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6 relative text-white font-medium">
-          {/* Home */}
-          <div
-            className={navItemClass}
-            style={{ color: "#000000ff" }}
-            onClick={() => navigate("/")}
-          >
+        {/* DESKTOP MENU */}
+        <nav className="hidden md:flex items-center gap-6">
+          <div className={navItemClass} onClick={() => navigate("/")}>
             Home
           </div>
 
-          {/* About */}
+          {/* ABOUT */}
           <div
             className="relative"
             onMouseEnter={() => setAboutOpen(true)}
             onMouseLeave={() => setAboutOpen(false)}
           >
-            <div className={navItemClass} style={{ color: "#000000ff" }}>
+            <div className={navItemClass}>
               About <ChevronDown size={14} />
             </div>
             <div
               className={`${dropdownClass} ${
                 aboutOpen
-                  ? "opacity-100 scale-100 pointer-events-auto"
+                  ? "opacity-100 scale-100"
                   : "opacity-0 scale-95 pointer-events-none"
               }`}
             >
               <div
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                className={dropdownItemClass}
                 onClick={() => navigate("/about/history")}
               >
                 History
               </div>
               <div
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                className={dropdownItemClass}
                 onClick={() => navigate("/about/vision")}
               >
                 Vision & Mission
@@ -123,19 +127,27 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Services */}
+          {/* SERVICES */}
           <div
             className="relative"
-            onMouseEnter={() => setServicesOpen(true)}
-            onMouseLeave={() => setServicesOpen(false)}
+            onMouseEnter={() => {
+              clearTimeout(servicesTimerRef.current);
+              setServicesOpen(true);
+            }}
+            onMouseLeave={() => {
+              servicesTimerRef.current = setTimeout(
+                () => setServicesOpen(false),
+                200
+              );
+            }}
           >
-            <div className={navItemClass} style={{ color: "#000000ff" }}>
+            <div className={navItemClass}>
               Services <ChevronDown size={14} />
             </div>
             <div
               className={`${dropdownClass} ${
                 servicesOpen
-                  ? "opacity-100 scale-100 pointer-events-auto"
+                  ? "opacity-100 scale-100"
                   : "opacity-0 scale-95 pointer-events-none"
               }`}
             >
@@ -149,7 +161,7 @@ export default function Header() {
               ].map((service) => (
                 <div
                   key={service}
-                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  className={dropdownItemClass}
                   onClick={() => goToService(service)}
                 >
                   {service}
@@ -158,65 +170,54 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Vehicle Search */}
-          <div
-            className={navItemClass}
-            onClick={handleVehicleSearch}
-            style={{ color: "#000000ff" }}
-          >
-            Vehicle Search
-          </div>
-
-          {/* Contact */}
-          <div
-            className={navItemClass}
-            onClick={() => navigate("/contact")}
-            style={{ color: "#000000ff" }}
-          >
+          <div className={navItemClass} onClick={() => navigate("/contact")}>
             Contact
           </div>
+
+          {showLogout && isLoggedIn && (
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 font-extrabold text-white bg-red-600/80 hover:bg-red-600 rounded-lg transition-all duration-200 hover:shadow-lg"
+            >
+              <LogOut size={16} /> Logout
+            </button>
+          )}
         </nav>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* MOBILE MENU */}
       {mobileOpen && (
-        <div className="md:hidden bg-white shadow-lg w-full absolute top-20 left-0 z-40">
-          <div className="flex flex-col py-4 px-6 gap-2 text-black">
-            <div
-              className="px-2 py-2 font-bold hover:bg-gray-100 rounded"
-              onClick={() => {
-                navigate("/");
-                setMobileOpen(false);
-              }}
-            >
+        <div 
+          className="md:hidden absolute top-20 left-0 w-full z-40 shadow-xl"
+          style={{
+            background: "linear-gradient(135deg, #0B1B3A 0%, #1a2f5a 50%, #7A4421 100%)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)"
+          }}
+        >
+          <div className="flex flex-col px-6 py-4 gap-2">
+            <div className={mobileItemClass} onClick={() => navigate("/")}>
               Home
             </div>
 
-            {/* About Dropdown */}
-            <div className="flex flex-col">
+            {/* ABOUT */}
+            <div>
               <div
-                className="px-2 py-2 font-bold flex justify-between items-center hover:bg-gray-100 rounded cursor-pointer"
+                className={`${mobileItemClass} flex justify-between`}
                 onClick={() => setAboutOpen(!aboutOpen)}
               >
                 About <ChevronDown size={16} />
               </div>
               {aboutOpen && (
-                <div className="ml-4 flex flex-col mt-1">
+                <div className="ml-4">
                   <div
-                    className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer"
-                    onClick={() => {
-                      navigate("/about/history");
-                      setMobileOpen(false);
-                    }}
+                    className={mobileItemClass}
+                    onClick={() => navigate("/about/history")}
                   >
                     History
                   </div>
                   <div
-                    className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer"
-                    onClick={() => {
-                      navigate("/about/vision");
-                      setMobileOpen(false);
-                    }}
+                    className={mobileItemClass}
+                    onClick={() => navigate("/about/vision")}
                   >
                     Vision & Mission
                   </div>
@@ -224,16 +225,16 @@ export default function Header() {
               )}
             </div>
 
-            {/* Services Dropdown */}
-            <div className="flex flex-col">
+            {/* SERVICES */}
+            <div>
               <div
-                className="px-2 py-2 font-bold flex justify-between items-center hover:bg-gray-100 rounded cursor-pointer"
+                className={`${mobileItemClass} flex justify-between`}
                 onClick={() => setServicesOpen(!servicesOpen)}
               >
                 Services <ChevronDown size={16} />
               </div>
               {servicesOpen && (
-                <div className="ml-4 flex flex-col mt-1">
+                <div className="ml-4">
                   {[
                     "Dhanush Mines",
                     "Blue Metal",
@@ -244,7 +245,7 @@ export default function Header() {
                   ].map((service) => (
                     <div
                       key={service}
-                      className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer"
+                      className={mobileItemClass}
                       onClick={() => goToService(service)}
                     >
                       {service}
@@ -254,68 +255,18 @@ export default function Header() {
               )}
             </div>
 
-            {/* Vehicle Search */}
-            <div
-              className="px-2 py-2 font-bold hover:bg-gray-100 rounded cursor-pointer"
-              onClick={() => {
-                handleVehicleSearch();
-                setMobileOpen(false);
-              }}
-            >
-              Vehicle Search
-            </div>
-
-            {/* Contact */}
-            <div
-              className="px-2 py-2 font-bold hover:bg-gray-100 rounded cursor-pointer"
-              onClick={() => {
-                navigate("/contact");
-                setMobileOpen(false);
-              }}
-            >
+            <div className={mobileItemClass} onClick={() => navigate("/contact")}>
               Contact
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Login / SignUp Modal */}
-      {showLoginModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full relative">
-            {/* Close button */}
-            <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-              onClick={() => setShowLoginModal(false)}
-            >
-              X
-            </button>
-
-            <h2 className="text-2xl font-bold mb-4 text-center">
-              Login or Sign Up
-            </h2>
-
-            <div className="flex flex-col gap-4">
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                onClick={() => {
-                  navigate("/login");
-                  setShowLoginModal(false);
-                }}
+            {showLogout && isLoggedIn && (
+              <div
+                className="flex items-center gap-2 px-2 py-2 font-bold text-white bg-red-600/80 hover:bg-red-600 rounded cursor-pointer transition-colors"
+                onClick={handleLogout}
               >
-                Login
-              </button>
-
-              <button
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                onClick={() => {
-                  navigate("/register");
-                  setShowLoginModal(false);
-                }}
-              >
-                Sign Up
-              </button>
-            </div>
+                <LogOut size={16} /> Logout
+              </div>
+            )}
           </div>
         </div>
       )}

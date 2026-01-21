@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 
 export default function Contact() {
-  // Variants
+  // Animation Variants
   const infoVariants = {
     hidden: { opacity: 0, x: -40 },
     visible: (i) => ({
@@ -17,38 +17,57 @@ export default function Contact() {
 
   const formVariants = {
     hidden: { opacity: 0, x: 40 },
-    visible: (i) => ({
+    visible: {
       opacity: 1,
       x: 0,
-      transition: { delay: i * 0.2, duration: 0.6, ease: "easeOut" },
-    }),
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
   };
 
   const mapVariants = {
     hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 1, ease: "easeOut" } },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 1, ease: "easeOut" },
+    },
   };
 
   const contactInfo = [
     {
-      icon: <Phone className="text-blue-700" />,
+      icon: <Phone className="text-blue-700 mt-1" />,
       title: "Phone",
-      desc: "+91 98765 43210",
+      desc: (
+        <div className="space-y-1 text-gray-600">
+          <a href="tel:+919345434217" className="block hover:text-blue-700">
+            +91 93454 34217
+          </a>
+          <a href="tel:+919486836888" className="block hover:text-blue-700">
+            +91 94868 36888
+          </a>
+          <a href="tel:+918925827059" className="block hover:text-blue-700">
+            +91 89258 27059
+          </a>
+          <a href="tel:+919042066205" className="block hover:text-blue-700">
+            +91 90420 66205
+          </a>
+        </div>
+      ),
     },
     {
-      icon: <Mail className="text-blue-700" />,
+      icon: <Mail className="text-blue-700 mt-1" />,
       title: "Email",
-      desc: "contact@sprtransport.com",
+      desc: "support@sprtransport.com",
     },
     {
-      icon: <MapPin className="text-blue-700" />,
+      icon: <MapPin className="text-blue-700 mt-1" />,
       title: "Office Address",
-      desc: "SPR Transport, Main Road, Industrial Area, Tamil Nadu, India – 600001",
+      desc: "Sri Periyandavar And Company, Tindivanam Bypass, Near KBS Bus Stop, Pattanur, Tamil Nadu, Villupuram – 605111",
     },
     {
-      icon: <Clock className="text-blue-700" />,
+      icon: <Clock className="text-blue-700 mt-1" />,
       title: "Working Hours",
-      desc: "Mon – Sat : 9:00 AM – 6:00 PM",
+      desc: "24/7",
     },
   ];
 
@@ -78,8 +97,8 @@ export default function Contact() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            We’re here to help. Reach out to SPR Transport for logistics solutions,
-            business enquiries, or support.
+            We’re here to help. Reach out to SPR Groups ,
+             business enquiries, or support.
           </motion.p>
         </div>
       </motion.section>
@@ -100,8 +119,8 @@ export default function Contact() {
               >
                 {info.icon}
                 <div>
-                  <p className="font-semibold">{info.title}</p>
-                  <p className="text-gray-600">{info.desc}</p>
+                  <p className="font-semibold text-gray-800">{info.title}</p>
+                  <div className="mt-1">{info.desc}</div>
                 </div>
               </motion.div>
             ))}
@@ -122,6 +141,7 @@ export default function Contact() {
             >
               Send Us a Message
             </motion.h2>
+
             <form className="space-y-5">
               {["Your Name", "Your Email", "Subject"].map((placeholder, i) => (
                 <motion.input
@@ -134,6 +154,7 @@ export default function Contact() {
                   transition={{ delay: 0.2 * i + 0.3 }}
                 />
               ))}
+
               <motion.textarea
                 rows={4}
                 placeholder="Your Message"
@@ -142,6 +163,7 @@ export default function Contact() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.9 }}
               />
+
               <motion.button
                 type="submit"
                 className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-lg transition"
@@ -156,19 +178,32 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* Map Section */}
+      {/* Map Section – EXACT LOCATION WITH CLICK TO DIRECTIONS */}
       <motion.section
         className="w-full h-[400px]"
         initial="hidden"
         animate="visible"
         variants={mapVariants}
       >
-        <iframe
-          title="SPR Transport Location"
-          src="https://www.google.com/maps?q=Tamil%20Nadu%20India&output=embed"
-          className="w-full h-full border-0"
-          loading="lazy"
-        />
+        <div
+          className="relative w-full h-full cursor-pointer"
+          onClick={() =>
+            window.open(
+              "https://www.google.com/maps/dir/?api=1&destination=Sri%20Periyandavar%20And%20Company%2C%20Tindivanam%20Bypass%2C%20Near%20KBS%20Bus%20Stop%2C%20Pattanur%2C%20Tamil%20Nadu%2C%20Villupuram%20%E2%80%93%20605111",
+              "_blank"
+            )
+          }
+        >
+          <iframe
+            title="Sri Periyandavar And Company Location"
+            src="https://www.google.com/maps?q=Sri%20Periyandavar%20And%20Company%2C%20Tindivanam%20Bypass%2C%20Near%20KBS%20Bus%20Stop%2C%20Pattanur%2C%20Tamil%20Nadu%2C%20Villupuram%20%E2%80%93%20605111&z=16&output=embed"
+            className="w-full h-full border-0 pointer-events-none"
+            loading="lazy"
+          />
+          <div className="absolute bottom-3 right-3 bg-white/80 text-xs px-3 py-1 rounded shadow">
+            Click map to open directions
+          </div>
+        </div>
       </motion.section>
 
       <Footer />

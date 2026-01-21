@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
@@ -23,6 +25,9 @@ export default function SPRTransport() {
   /* ===== CAROUSEL STATE ===== */
   const carouselImages = [transportImg, sprTransportImg, heroImg];
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -30,6 +35,32 @@ export default function SPRTransport() {
     }, 3000);
     return () => clearInterval(interval);
   }, [carouselImages.length]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  // Disable body scroll when modal open
+  useEffect(() => {
+    if (showLoginModal) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "auto";
+  }, [showLoginModal]);
+
+  const handleVehicleSearch = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setShowLoginModal(true);
+    } else {
+      navigate("/vehicleSearch");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsLoggedIn(false);
+    navigate("/login");
+  };
 
   // Gallery images - using available transport images
   const galleryImages = [transportImg, sprTransportImg, transportImg, sprTransportImg, transportImg, sprTransportImg];
@@ -45,7 +76,7 @@ export default function SPRTransport() {
 
   return (
     <>
-      <Header />
+      <Header showLogout />
 
       <div className="bg-gray-50">
         {/* ================= BANNER – 3 IMAGE CAROUSEL ================= */}
@@ -84,6 +115,48 @@ export default function SPRTransport() {
             </p>
           </motion.div>
         </section>
+
+        {/* Login / SignUp Modal (only for this page) */}
+        {showLoginModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full relative">
+              {/* Close button */}
+              <button
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowLoginModal(false)}
+                aria-label="Close"
+              >
+                X
+              </button>
+
+              <h2 className="text-2xl font-bold mb-4 text-center">
+                Login or Sign Up
+              </h2>
+
+              <div className="flex flex-col gap-4">
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                  onClick={() => {
+                    navigate("/login");
+                    setShowLoginModal(false);
+                  }}
+                >
+                  Login
+                </button>
+
+                <button
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                  onClick={() => {
+                    navigate("/register");
+                    setShowLoginModal(false);
+                  }}
+                >
+                  Sign Up
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ================= CONTENT + GALLERY ================= */}
         <section className="max-w-7xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-14 items-center">
@@ -219,7 +292,7 @@ export default function SPRTransport() {
         <section className="bg-gray-50 py-20">
           <div className="max-w-7xl mx-auto px-6">
             <motion.h2
-              className="text-3xl md:text-4xl font-bold mb-12 text-center text-gray-800"
+              className="text-3xl md:text-4xl font-bold mb-6 text-center text-gray-800"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -227,6 +300,8 @@ export default function SPRTransport() {
             >
               Our Transport Fleet in Action
             </motion.h2>
+
+         
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {galleryImages.slice(0, 6).map((img, i) => (
@@ -242,15 +317,27 @@ export default function SPRTransport() {
                   <img
                     src={img}
                     alt={`Transport Fleet ${i + 1}`}
-                    className={`w-full ${
-                      i % 2 === 0 ? "h-64 md:h-72" : "h-56 md:h-64"
-                    } object-cover object-center rounded-2xl`}
+                    className="w-full h-64 md:h-72 object-cover object-center rounded-2xl"
                   />
                   <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-20 transition rounded-2xl" />
                 </motion.div>
               ))}
             </div>
 
+            {/* Vehicle Search CTA (new style with spacing) */}
+            <div className="mt-12 mb-14 flex justify-center">
+              <button
+                onClick={handleVehicleSearch}
+                className="group relative inline-flex items-center gap-3 rounded-full px-12 py-4 font-bold text-white shadow-2xl transition-all duration-300 bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-400 hover:from-indigo-400 hover:via-blue-400 hover:to-cyan-300 focus:outline-none focus:ring-4 focus:ring-blue-300/60"
+              >
+                <span className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/15" />
+                <span className="relative inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/15 group-hover:bg-white/25 transition">
+                  <Search size={20} />
+                </span>
+                <span className="relative tracking-wide">Vehicle Search</span>
+                <span className="relative ml-2 h-2 w-2 rounded-full bg-white/70 group-hover:bg-white transition" />
+              </button>
+            </div>
             {/* Staggered sliding carousel for additional images */}
             <div className="mt-12 overflow-hidden relative">
               <motion.div

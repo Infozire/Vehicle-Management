@@ -263,7 +263,7 @@ export default function DhanushMines() {
       {[mine1, mine2, mine3, mine4, mine5, mine1].map((img, i) => (
         <motion.div
           key={i}
-          className={`relative rounded-2xl overflow-hidden shadow-lg cursor-pointer`}
+          className="relative rounded-2xl overflow-hidden shadow-lg cursor-pointer"
           initial={{ opacity: 0, y: 40, scale: 0.95 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
           viewport={{ once: true }}
@@ -273,9 +273,7 @@ export default function DhanushMines() {
           <img
             src={img}
             alt={`Mining ${i + 1}`}
-            className={`w-full ${
-              i % 2 === 0 ? "h-64 md:h-72" : "h-56 md:h-64"
-            } object-cover rounded-2xl`}
+            className="w-full h-64 md:h-72 object-cover rounded-2xl"
           />
           <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-20 transition rounded-2xl" />
         </motion.div>

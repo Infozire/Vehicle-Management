@@ -344,9 +344,7 @@ export default function SPRMotors() {
                   <img
                     src={img}
                     alt={`SPR Motors ${i + 1}`}
-                    className={`w-full ${
-                      i % 3 === 0 ? "h-72" : i % 3 === 1 ? "h-64" : "h-80"
-                    } object-cover transition-transform duration-500 group-hover:scale-110`}
+                    className="w-full h-72 md:h-80 object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="absolute bottom-4 left-4 right-4">

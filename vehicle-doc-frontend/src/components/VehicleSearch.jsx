@@ -1,4 +1,3 @@
-// src/pages/UserDashboard.js
 import React, { useState, useEffect } from "react";
 import API from "../api";
 import { LogOut, Download } from "lucide-react";
@@ -9,19 +8,35 @@ export default function UserDashboard() {
   const [results, setResults] = useState([]);
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
+
   const navigate = useNavigate();
 
-  // Get user info from localStorage
+  // 🔐 Auth Guard
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
-    if (!userData) return navigate("/login");
+    const token = localStorage.getItem("token");
+
+    if (!userData || !token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
     setUser(userData);
   }, [navigate]);
 
+  // 🚪 LOGOUT FUNCTION (FINAL & CORRECT)
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
+    // Clear all storage (AsyncStorage equivalent for web)
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Clear in-memory state
+    setUser(null);
+    setResults([]);
+    setQuery("");
+
+    // Redirect & block back navigation
+    navigate("/login", { replace: true });
   };
 
   const handleSearch = async (e) => {
@@ -33,9 +48,14 @@ export default function UserDashboard() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await API.get(`/api/vehicles/search?number=${query}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+
+      const res = await API.get(
+        `/api/vehicles/search?number=${query}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       setResults(Array.isArray(res.data) ? res.data : [res.data]);
     } catch (err) {
       console.error(err);
@@ -43,15 +63,16 @@ export default function UserDashboard() {
     }
   };
 
-  // ✅ Download single document as blob
+  // 📥 Download single document
   const handleDownload = async (filePath, filename) => {
     try {
       const token = localStorage.getItem("token");
+
       const res = await fetch(`${API.defaults.baseURL}/${filePath}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) throw new Error("Failed to fetch file");
+      if (!res.ok) throw new Error("Download failed");
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -61,17 +82,19 @@ export default function UserDashboard() {
       link.download = filename || "file";
       document.body.appendChild(link);
       link.click();
+
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Download failed:", err);
+      console.error(err);
       alert("Failed to download file");
     }
   };
 
-  // ✅ Download all documents sequentially
+  // 📦 Download all documents
   const handleDownloadAll = async (docs) => {
     if (!docs || docs.length === 0) return;
+
     for (const doc of docs) {
       await handleDownload(doc.file_path, doc.original_name);
     }
@@ -93,7 +116,7 @@ export default function UserDashboard() {
         </div>
       </header>
 
-      {/* SEARCH BAR */}
+      {/* SEARCH */}
       <div className="flex justify-center mt-6">
         <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-3xl">
           <input
@@ -112,11 +135,14 @@ export default function UserDashboard() {
         </form>
       </div>
 
-      {/* SEARCH RESULTS */}
+      {/* RESULTS */}
       <main className="flex-1 mt-6 px-6 max-w-5xl mx-auto">
         {error && <p className="text-red-600 mb-4">{error}</p>}
+
         {results.length === 0 && !error && (
-          <p className="text-gray-500">No results yet. Try entering a valid vehicle number.</p>
+          <p className="text-gray-500">
+            No results yet. Try entering a valid vehicle number.
+          </p>
         )}
 
         {results.map((vehicle) => (
@@ -127,14 +153,18 @@ export default function UserDashboard() {
             {/* VEHICLE HEADER */}
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-800">{vehicle.vehicle_number}</h2>
-                <p className="text-sm text-gray-500">{vehicle.make} / {vehicle.model}</p>
+                <h2 className="text-xl font-bold">
+                  {vehicle.vehicle_number}
+                </h2>
                 <p className="text-sm text-gray-500">
-                  Customer: {vehicle.customer?.name || vehicle.customer_name} (
-                  {vehicle.customer?.email || vehicle.customer_email})
+                  {vehicle.make} / {vehicle.model}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Customer: {vehicle.customer?.name || vehicle.customer_name}
                 </p>
               </div>
-              {vehicle.documents && vehicle.documents.length > 0 && (
+
+              {vehicle.documents?.length > 0 && (
                 <button
                   onClick={() => handleDownloadAll(vehicle.documents)}
                   className="flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
@@ -144,22 +174,28 @@ export default function UserDashboard() {
               )}
             </div>
 
-            {/* DOCUMENTS LIST */}
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {vehicle.documents && vehicle.documents.length > 0 ? (
+            {/* DOCUMENTS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {vehicle.documents?.length > 0 ? (
                 vehicle.documents.map((doc) => (
                   <div
                     key={doc._id}
-                    className="flex justify-between items-center border rounded-lg p-3 bg-gray-50 hover:shadow-md transition"
+                    className="flex justify-between items-center border rounded-lg p-3 bg-gray-50"
                   >
                     <div>
-                      <p className="text-sm font-semibold">{doc.document_type}</p>
-                      <p className="text-xs text-gray-400 truncate max-w-xs">{doc.original_name}</p>
+                      <p className="text-sm font-semibold">
+                        {doc.document_type}
+                      </p>
+                      <p className="text-xs text-gray-400 truncate max-w-xs">
+                        {doc.original_name}
+                      </p>
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleDownload(doc.file_path, doc.original_name)}
-                        className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition"
+                        onClick={() =>
+                          handleDownload(doc.file_path, doc.original_name)
+                        }
+                        className="px-3 py-1 bg-green-600 text-white rounded text-sm"
                       >
                         Download
                       </button>
@@ -167,7 +203,7 @@ export default function UserDashboard() {
                         href={`${API.defaults.baseURL}/${doc.file_path}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3 py-1 border rounded text-sm hover:bg-gray-100 transition"
+                        className="px-3 py-1 border rounded text-sm"
                       >
                         View
                       </a>
@@ -175,7 +211,9 @@ export default function UserDashboard() {
                   </div>
                 ))
               ) : (
-                <p className="text-gray-400 text-sm col-span-2">No documents uploaded.</p>
+                <p className="text-gray-400 text-sm col-span-2">
+                  No documents uploaded.
+                </p>
               )}
             </div>
           </div>

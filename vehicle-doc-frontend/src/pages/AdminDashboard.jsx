@@ -63,31 +63,35 @@ export default function AdminDashboard() {
   // ---------------- VEHICLE SEARCH ----------------
   const VEHICLE_REGEX = /^TN\d{2}[A-Z]\d{5}$/;
 
-  const handleVehicleSearch = async () => {
-    const value = searchTerm.trim().toUpperCase();
+const handleVehicleSearch = async () => {
+  const value = searchTerm
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toUpperCase()
+    .trim();
 
-    if (!VEHICLE_REGEX.test(value)) {
-      alert("Enter full vehicle number (eg: TN16H72666)");
-      clearVehicleUI();
-      return;
-    }
+  if (!value) {
+    alert("Enter vehicle number");
+    clearVehicleUI();
+    return;
+  }
 
-    try {
-      const res = await API.get(`/api/vehicles/search?number=${value}`);
-      const vehicle = res.data;
+  try {
+    const res = await API.get(
+      `/api/vehicles/search?number=${value}`
+    );
 
-      setSelectedVehicle(vehicle._id);
-      setVehicleDetails(vehicle);
+    const vehicle = res.data;
+    setSelectedVehicle(vehicle._id);
+    setVehicleDetails(vehicle);
 
-      setVehicles((prev) => {
-        const exists = prev.find((v) => v._id === vehicle._id);
-        return exists ? prev : [...prev, vehicle];
-      });
-    } catch (err) {
-      alert("Vehicle not found");
-      clearVehicleUI();
-    }
-  };
+  } catch (err) {
+    alert(
+      err?.response?.data?.message || "Vehicle not found"
+    );
+    clearVehicleUI();
+  }
+};
+
 
   const clearVehicleUI = () => {
     setSelectedVehicle("");
@@ -95,27 +99,45 @@ export default function AdminDashboard() {
   };
 
   // ---------------- DOCUMENTS ----------------
-  const getDocPath = (type) => {
-    if (!selectedVehicle || documents.length === 0) return null;
+ const getDocPath = (type) => {
+  if (!selectedVehicle || documents.length === 0) return null;
 
-    const doc = documents.find((d) => {
-      const vehicleId = typeof d.vehicle === "object" ? d.vehicle._id : d.vehicle;
-      return d.document_type === type && vehicleId === selectedVehicle;
-    });
+  const doc = documents.find((d) => {
+    if (!d || !d.vehicle) return false; // ✅ CRITICAL GUARD
 
-    return doc?.file_path ? doc.file_path.replace(/\\/g, "/") : null;
-  };
+    const vehicleId =
+      typeof d.vehicle === "object" ? d.vehicle?._id : d.vehicle;
+
+    return (
+      d.document_type === type &&
+      vehicleId === selectedVehicle
+    );
+  });
+
+  return doc?.file_path
+    ? doc.file_path.replace(/\\/g, "/")
+    : null;
+};
+
 
   const vehiclePhotoPath = useMemo(() => getDocPath("Vehicle Photo"), [selectedVehicle, documents]);
 
-  const getVehicleDocument = (docType) => {
-    if (!selectedVehicle) return null;
+const getVehicleDocument = (docType) => {
+  if (!selectedVehicle) return null;
 
-    return documents.find((d) => {
-      const vehicleId = typeof d.vehicle === "object" ? d.vehicle._id : d.vehicle;
-      return d.document_type === docType && vehicleId === selectedVehicle;
-    });
-  };
+  return documents.find((d) => {
+    if (!d || !d.vehicle) return false; // ✅ SAFETY
+
+    const vehicleId =
+      typeof d.vehicle === "object" ? d.vehicle?._id : d.vehicle;
+
+    return (
+      d.document_type === docType &&
+      vehicleId === selectedVehicle
+    );
+  });
+};
+
 
   const getExpiryDate = (docType) => {
     if (!vehicleDetails) return "—";
