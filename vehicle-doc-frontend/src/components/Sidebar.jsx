@@ -22,9 +22,11 @@ const Sidebar = () => {
   }, []);
 
 const handleLogout = () => {
-  localStorage.clear();   // clear everything
-  navigate("/login", { replace: true });
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
+  window.location.href = "/login";
 };
+
 
 
   const menuItems = [

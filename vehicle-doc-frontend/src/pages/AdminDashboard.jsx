@@ -66,23 +66,29 @@ export default function AdminDashboard() {
 
   // ---------------- LISTEN FOR LOCALSTORAGE CHANGES ----------------
 
-useEffect(() => {
-  const loadUser = async () => {
-    const stored = JSON.parse(localStorage.getItem("user"));
-    if (stored) setCurrentUser(stored);
+  useEffect(() => {
+    const loadUser = async () => {
+      // 1️⃣ Load instantly from localStorage
+      const stored = JSON.parse(localStorage.getItem("user"));
+      if (stored) {
+        setCurrentUser(normalizeUser(stored));
+      }
 
-    try {
-      const res = await API.get("/api/auth/me");
-      const apiUser = normalizeUser(res.data.user);
-      setCurrentUser(apiUser);
-      localStorage.setItem("user", JSON.stringify(apiUser));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      // 2️⃣ Sync with backend (authoritative)
+      try {
+        const res = await API.get("/api/auth/me");
+        const apiUser = normalizeUser(res.data.user);
 
-  loadUser();
-}, []);
+        setCurrentUser(apiUser);
+        localStorage.setItem("user", JSON.stringify(apiUser));
+      } catch (err) {
+        console.error("Auth sync failed", err);
+      }
+    };
+
+    loadUser();
+  }, []);
+
 
 
   // ---------------- VEHICLE SEARCH ----------------
@@ -177,6 +183,17 @@ useEffect(() => {
       : `${API.defaults.baseURL}/${filePath.replace(/^\/+/, "")}`;
     setPreviewFile(url);
   };
+  const normalizeUser = (user) => {
+    if (!user) return null;
+
+    return {
+      ...user,
+      profileImage:
+        typeof user.profileImage === "string"
+          ? user.profileImage
+          : user.profileImage?.path || "",
+    };
+  };
 
   // ---------------- PENDING USERS ----------------
   const fetchPendingUsers = async () => {
@@ -196,10 +213,10 @@ useEffect(() => {
       console.error("Error approving user:", err);
     }
   };
-const safeProfileImage =
-  typeof currentUser?.profileImage === "string"
-    ? currentUser.profileImage
-    : currentUser?.profileImage?.path || "";
+  const safeProfileImage =
+    typeof currentUser?.profileImage === "string"
+      ? currentUser.profileImage
+      : currentUser?.profileImage?.path || "";
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-[#F4F6FF] via-[#EEF1FA] to-[#E9EDFF]">
       <Sidebar pendingRequests={pendingUsers.length} />
@@ -214,18 +231,19 @@ const safeProfileImage =
             className="w-[440px] px-6 py-3 rounded-2xl bg-white shadow-lg outline-none"
           />
           <div className="flex items-center gap-3 bg-white px-5 py-2 rounded-full shadow-lg">
-<img
-  src={
-    currentUser?.profileImage
-      ? `${API.defaults.baseURL}/${currentUser.profileImage}`
-      : "https://i.pravatar.cc/40"
-  }
-  onError={(e) => {
-    e.currentTarget.src = "https://i.pravatar.cc/40";
-  }}
-  className="rounded-full w-9 h-9 object-cover"
-  alt="User Avatar"
-/>
+            <img
+              src={
+                currentUser?.profileImage
+                  ? `${API.defaults.baseURL}/${currentUser.profileImage.replace(/^\/+/, "")}`
+                  : "https://i.pravatar.cc/40"
+              }
+              onError={(e) => {
+                e.currentTarget.src = "https://i.pravatar.cc/40";
+              }}
+              className="rounded-full w-9 h-9 object-cover"
+              alt="User Avatar"
+            />
+
 
 
 
@@ -316,11 +334,9 @@ const safeProfileImage =
                 <DocCard
                   key={title}
                   title={title}
-                  color={`linear-gradient(135deg, ${
-                    DOC_COLORS[title]?.split(" ")[0]?.replace("from-[", "").replace("]", "")
-                  } 0%, ${
-                    DOC_COLORS[title]?.split(" ")[1]?.replace("to-[", "").replace("]", "")
-                  } 100%)`}
+                  color={`linear-gradient(135deg, ${DOC_COLORS[title]?.split(" ")[0]?.replace("from-[", "").replace("]", "")
+                    } 0%, ${DOC_COLORS[title]?.split(" ")[1]?.replace("to-[", "").replace("]", "")
+                    } 100%)`}
                   icon={
                     title === "Insurance" ? (
                       <ShieldCheck className="text-white" size={20} />

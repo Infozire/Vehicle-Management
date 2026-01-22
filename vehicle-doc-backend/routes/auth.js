@@ -81,10 +81,22 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.status(200).json({
-      user: { name: user.name, email: user.email, company: user.company, role: user.role, isApproved: user.isApproved },
-      token,
-    });
+   res.status(200).json({
+  user: {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    company: user.company,
+    role: user.role,
+    isApproved: user.isApproved,
+    profileImage:
+      typeof user.profileImage === "string"
+        ? user.profileImage
+        : user.profileImage?.path || "",
+  },
+  token,
+});
+
   } catch (err) {
     console.error("Login Error:", err.message);
     res.status(500).json({ message: "Server error" });

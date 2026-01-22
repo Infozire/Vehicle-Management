@@ -53,11 +53,37 @@ export default function VehicleSearch() {
     e.preventDefault();
     searchVehicle();
   };
+const getIconByType = (type) => {
+  switch (type) {
+    case "RC Book":
+      return BookOpen;
+    case "Insurance":
+      return ShieldCheck;
+    case "Fitness":
+      return FileText;
+    case "Pondicherry Permit":
+      return FileCheck;
+    default:
+      return FileText;
+  }
+};
 
-const getDoc = (docs, type) =>
-  docs?.find(
-    (d) => d.document_type?.toLowerCase() === type.toLowerCase()
-  );
+const getExpiryByType = (vehicle, type) => {
+  switch (type) {
+    case "RC Book":
+      return vehicle.rc_expiry;
+    case "Insurance":
+      return vehicle.insurance_expiry;
+    case "Fitness":
+      return vehicle.fitness_expiry;
+    case "Road Tax":
+      return vehicle.road_tax_expiry;
+    case "Pondicherry Permit":
+      return vehicle.py_permit_expiry;
+    default:
+      return null;
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -196,33 +222,29 @@ const getDoc = (docs, type) =>
                     </div>
                   </div>
 
-                  <div className="p-6 space-y-4">
-                    {getDoc(docs, "Pondicherry Permit") && (
-                      <DocRow
-                        icon={FileCheck}
-                        title="Pondicherry Permit"
-                        date={new Date(
-                          getDoc(docs, "Pondicherry Permit").expiry_date
-                        ).toDateString()}
-                        fileUrl={`${API.defaults.baseURL}/${
-                          getDoc(docs, "Pondicherry Permit").file_path
-                        }`}
-                      />
-                    )}
+               <div className="p-6 space-y-4">
+  {docs.length > 0 ? (
+    docs.map((doc) => (
+      <DocRow
+        key={doc._id}
+        icon={getIconByType(doc.document_type)}
+        title={doc.document_type}
+       date={
+  getExpiryByType(v, doc.document_type)
+    ? new Date(
+        getExpiryByType(v, doc.document_type)
+      ).toDateString()
+    : "No expiry"
+}
 
-                    {getDoc(docs, "RC Book") && (
-                      <DocRow
-                        icon={BookOpen}
-                        title="RC Book"
-                        date={new Date(
-                          getDoc(docs, "RC Book").expiry_date
-                        ).toDateString()}
-                        fileUrl={`${API.defaults.baseURL}/${
-                          getDoc(docs, "RC Book").file_path
-                        }`}
-                      />
-                    )}
-                  </div>
+        fileUrl={`${API.defaults.baseURL}/${doc.file_path}`}
+      />
+    ))
+  ) : (
+    <p className="text-gray-500 text-sm">No documents available</p>
+  )}
+</div>
+
                 </div>
               );
             })}
