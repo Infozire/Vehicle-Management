@@ -21,7 +21,8 @@ import sprParadiseImg from "../assets/services/spr-paradise.jpg";
 import JKTyresImg from "../assets/services/jktyres.png";
 import sprMotorsImg from "../assets/services/sprmotors.png"
 import dhanushminesImg from "../assets/services/dhanushmines.png"
-import sprTransport from "../assets/services/sprtransport.png";
+import BlueMetal from "../assets/BlueMetal/Bluemetal.png";
+import sprTransport from "../assets/services/SPR.png";
 import PartnersSlider from "../components/PartnersSlider";
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ const swiperRef = useRef(null);
       title: "Blue Metal",
       desc: "Mining operations with safety, efficiency, and responsible resource management.",
       icon: <Factory size={36} />,
-      image:dhanushminesImg,
+      image:BlueMetal,
       route: "/services/spr-bluemetal",
     },
     {

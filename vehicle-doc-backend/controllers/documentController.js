@@ -3,11 +3,17 @@ import Document from "../models/Document.js";
 // GET all documents
 export const getDocuments = async (req, res) => {
   try {
-    const docs = await Document.find().populate("vehicle", "vehicle_number");
-    res.json(docs);
+    const documents = await Document.find()
+      .populate({
+        path: "vehicle",
+        select: "vehicle_number", // 👈 fetch from vehicles collection
+      })
+      .sort({ createdAt: -1 });
+
+    res.json(documents);
   } catch (err) {
-    console.error("Get Documents Error:", err);
-    res.status(500).json({ message: "Server error: " + err.message });
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch documents" });
   }
 };
 

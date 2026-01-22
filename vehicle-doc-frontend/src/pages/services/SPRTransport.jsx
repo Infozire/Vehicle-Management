@@ -6,9 +6,10 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
 // Images
-import transportImg from "../../assets/transport.jpg";
-import sprTransportImg from "../../assets/services/sprtransport.png";
-import heroImg from "../../assets/mines.png";
+import transportImg from "../../assets/services/sprtransport.png";
+import sprt1 from "../../assets/BlueMetal/blue1.jpg"
+import sprTransportImg from "../../assets/services/SPR.png";
+import heroImg from "../../assets/BlueMetal/blue1.jpg";
 
 export default function SPRTransport() {
   const highlights = [
@@ -63,7 +64,7 @@ export default function SPRTransport() {
   };
 
   // Gallery images - using available transport images
-  const galleryImages = [transportImg, sprTransportImg, transportImg, sprTransportImg, transportImg, sprTransportImg];
+  const galleryImages = [transportImg, sprTransportImg, sprt1, sprTransportImg, sprt1, sprTransportImg];
 
   const listVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -209,7 +210,7 @@ export default function SPRTransport() {
             viewport={{ once: true }}
           >
             <motion.img
-              src={transportImg}
+              src={sprt1}
               alt="Transport Vehicle 1"
               className="col-span-2 h-64 w-full rounded-2xl shadow-xl object-cover object-center"
               whileHover={{ scale: 1.04 }}
