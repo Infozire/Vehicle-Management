@@ -54,7 +54,10 @@ export default function VehicleSearch() {
     searchVehicle();
   };
 
-  const getDoc = (docs, type) => docs?.find((d) => d.document_type === type);
+const getDoc = (docs, type) =>
+  docs?.find(
+    (d) => d.document_type?.toLowerCase() === type.toLowerCase()
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">

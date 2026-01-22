@@ -5,6 +5,14 @@ import API from "../api";
 
 export function BulkUpload({ onDone }) {
   const [uploading, setUploading] = useState(false);
+const parseDate = (value) => {
+  if (!value) return null;
+
+  const [dd, mm, yyyy] = value.split("-");
+  if (!dd || !mm || !yyyy) return null;
+
+  return new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
+};
 
   const handleFile = async (e) => {
     const file = e.target.files[0];
@@ -68,13 +76,23 @@ export function BulkUpload({ onDone }) {
       }
 
       try {
-        await API.post("/api/vehicles", {
-          vehicleNumber: clean(vehicleNumber),
-          rto: clean(rto),
-          wheel: clean(wheel),
-          chassisNo: clean(chassisNo),
-          status: clean(status),
-        });
+await API.post("/api/vehicles", {
+  vehicleNumber: clean(vehicleNumber),
+  rto: clean(rto),
+  wheel: clean(wheel),
+  chassisNo: clean(chassisNo),
+  status: clean(status),
+
+  // 🔥 MATCH BACKEND VARIABLE NAMES
+  rcExpiry: parseDate(row["RC Expiry Date"]),
+  insuranceExpiry: parseDate(row["Insurance Expiry Date"]),
+  fitnessExpiry: parseDate(row["Fitness Expiry Date"]),
+  pollutionExpiry: parseDate(row["Pollution Expiry Date"]),
+  tnPermitExpiry: parseDate(row["Tamil Nadu Permit Expiry"]),
+  pyPermitExpiry: parseDate(row["Pondicherry Permit Expiry"]),
+  roadTaxExpiry: parseDate(row["Road Tax Expiry"]),
+});
+
 
         success++;
       } catch (err) {

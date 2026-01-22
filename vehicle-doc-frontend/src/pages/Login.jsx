@@ -22,10 +22,25 @@ export default function Login() {
 
       const { token, user } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      // ✅ NORMALIZE USER (CRITICAL FIX)
+      const normalizedUser = {
+        ...user,
+        profileImage:
+          typeof user.profileImage === "string"
+            ? user.profileImage
+            : user.profileImage?.path || "",
+      };
 
-      navigate(user.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(normalizedUser));
+
+      // Sync other tabs / dashboard instantly
+      window.dispatchEvent(new Event("storage"));
+
+      navigate(
+        normalizedUser.role === "admin" ? "/admin" : "/dashboard",
+        { replace: true }
+      );
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed");
     }
@@ -34,25 +49,28 @@ export default function Login() {
   return (
     <>
       <Header />
-      <div 
+      <div
         className="min-h-screen flex items-center justify-center relative py-12 px-4"
         style={{
           backgroundImage: `url(${bgImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          backgroundRepeat: "no-repeat"
+          backgroundRepeat: "no-repeat",
         }}
       >
-        {/* Overlay for better readability */}
+        {/* Overlay */}
         <div className="absolute inset-0 bg-black/40"></div>
-        
-        {/* Login Form Card */}
+
+        {/* Login Form */}
         <div className="relative z-10 w-full max-w-md">
-          <form 
-            onSubmit={handleSubmit} 
+          <form
+            onSubmit={handleSubmit}
             className="bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-white/20"
           >
-            <h2 className="text-3xl font-bold mb-6 text-center" style={{ color: "#7A4421" }}>
+            <h2
+              className="text-3xl font-bold mb-6 text-center"
+              style={{ color: "#7A4421" }}
+            >
               Login
             </h2>
 
@@ -73,7 +91,6 @@ export default function Login() {
               />
             </div>
 
-            {/* Password input with eye icon */}
             <div className="relative mb-6">
               <input
                 type={showPassword ? "text" : "password"}
@@ -92,20 +109,24 @@ export default function Login() {
               </button>
             </div>
 
-            <button 
+            <button
               type="submit"
               className="w-full text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
               style={{ backgroundColor: "#7A4421" }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = "#6a3a1a"}
-              onMouseLeave={(e) => e.target.style.backgroundColor = "#7A4421"}
+              onMouseEnter={(e) =>
+                (e.target.style.backgroundColor = "#6a3a1a")
+              }
+              onMouseLeave={(e) =>
+                (e.target.style.backgroundColor = "#7A4421")
+              }
             >
               Login
             </button>
 
             <p className="mt-6 text-sm text-center text-gray-600">
               Don't have an account?{" "}
-              <Link 
-                to="/register" 
+              <Link
+                to="/register"
                 className="font-semibold hover:underline transition"
                 style={{ color: "#7A4421" }}
               >

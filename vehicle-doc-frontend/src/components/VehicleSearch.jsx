@@ -189,7 +189,11 @@ export default function UserDashboard() {
                       <p className="text-xs text-gray-400 truncate max-w-xs">
                         {doc.original_name}
                       </p>
+                      <p className="text-xs text-gray-500">
+                        Expiry: {formatExpiryDate(doc.expiry_date)}
+                      </p>
                     </div>
+
                     <div className="flex gap-2">
                       <button
                         onClick={() =>

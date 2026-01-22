@@ -53,7 +53,7 @@ export default function SPRParadise() {
         <section className="relative h-[520px] md:h-[560px] overflow-hidden">
           <div
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroImg})` }}
+            style={{ backgroundImage: `url(${p10})` }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/65 to-black/30" />
 
@@ -221,7 +221,7 @@ export default function SPRParadise() {
               transition={{ duration: 0.8 }}
             >
               <img
-                src={p10}
+                src={p7}
                 alt="SPR Paradise Featured"
                 className="w-full h-[520px] object-cover hover:scale-105 transition-transform duration-700"
               />

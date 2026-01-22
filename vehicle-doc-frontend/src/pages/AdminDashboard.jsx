@@ -38,9 +38,9 @@ export default function AdminDashboard() {
 
   // ---------------- LOAD INITIAL DATA ----------------
   useEffect(() => {
-    // Load current user from localStorage
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser) setCurrentUser(storedUser);
+    // // Load current user from localStorage
+    // const storedUser = JSON.parse(localStorage.getItem("user"));
+    // if (storedUser) setCurrentUser(storedUser);
 
     // Fetch Vehicles
     API.get("/api/vehicles").then((r) => {
@@ -65,14 +65,25 @@ export default function AdminDashboard() {
   }, []);
 
   // ---------------- LISTEN FOR LOCALSTORAGE CHANGES ----------------
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-      setCurrentUser(storedUser);
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+
+useEffect(() => {
+  const loadUser = async () => {
+    const stored = JSON.parse(localStorage.getItem("user"));
+    if (stored) setCurrentUser(stored);
+
+    try {
+      const res = await API.get("/api/auth/me");
+      const apiUser = normalizeUser(res.data.user);
+      setCurrentUser(apiUser);
+      localStorage.setItem("user", JSON.stringify(apiUser));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  loadUser();
+}, []);
+
 
   // ---------------- VEHICLE SEARCH ----------------
   const handleVehicleSearch = async () => {
@@ -185,7 +196,10 @@ export default function AdminDashboard() {
       console.error("Error approving user:", err);
     }
   };
-
+const safeProfileImage =
+  typeof currentUser?.profileImage === "string"
+    ? currentUser.profileImage
+    : currentUser?.profileImage?.path || "";
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-[#F4F6FF] via-[#EEF1FA] to-[#E9EDFF]">
       <Sidebar pendingRequests={pendingUsers.length} />
@@ -200,15 +214,21 @@ export default function AdminDashboard() {
             className="w-[440px] px-6 py-3 rounded-2xl bg-white shadow-lg outline-none"
           />
           <div className="flex items-center gap-3 bg-white px-5 py-2 rounded-full shadow-lg">
-            <img
-              src={
-                currentUser?.photo
-                  ? `${API.defaults.baseURL}/${currentUser.photo}`
-                  : "https://i.pravatar.cc/40"
-              }
-              className="rounded-full w-9 h-9"
-              alt="User Avatar"
-            />
+<img
+  src={
+    currentUser?.profileImage
+      ? `${API.defaults.baseURL}/${currentUser.profileImage}`
+      : "https://i.pravatar.cc/40"
+  }
+  onError={(e) => {
+    e.currentTarget.src = "https://i.pravatar.cc/40";
+  }}
+  className="rounded-full w-9 h-9 object-cover"
+  alt="User Avatar"
+/>
+
+
+
             <span className="text-sm font-medium">
               {currentUser?.name || "Admin"}
             </span>

@@ -21,11 +21,11 @@ const Sidebar = () => {
     fetchPendingRequests();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
+const handleLogout = () => {
+  localStorage.clear();   // clear everything
+  navigate("/login", { replace: true });
+};
+
 
   const menuItems = [
     { icon: <Home size={18} />, label: "Dashboard", to: "/admin" },

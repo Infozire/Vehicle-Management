@@ -114,38 +114,41 @@ export const searchVehicle = async (req, res) => {
 
     if (!number) {
       return res.status(400).json({
-        message: "Vehicle number is required"
+        message: "Vehicle number is required",
       });
     }
 
-    const input = number
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .toUpperCase();
+    const input = number.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 
     console.log("🔍 Searching vehicle:", input);
 
+    // 1️⃣ Find vehicle
     const vehicle = await Vehicle.findOne({
-      vehicle_number: {
-        $regex: input,
-        $options: "i"
-      }
-    })
-      .populate("customer", "name email")
-      .populate("documents");
+      vehicle_number: { $regex: input, $options: "i" },
+    }).populate("customer", "name email");
 
     if (!vehicle) {
       return res.status(404).json({
-        message: "Vehicle not found"
+        message: "Vehicle not found",
       });
     }
 
-    res.status(200).json(vehicle);
+    // 2️⃣ Find documents linked to this vehicle
+    const documents = await Document.find({
+      vehicle: vehicle._id,
+    }).sort({ createdAt: -1 });
 
+    // 3️⃣ Send combined response
+    res.status(200).json({
+      ...vehicle.toObject(),
+      documents, // ✅ THIS FIXES YOUR ISSUE
+    });
   } catch (err) {
     console.error("Search Vehicle Error:", err);
     res.status(500).json({ message: err.message });
   }
 };
+
 
 
 

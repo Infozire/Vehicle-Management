@@ -9,42 +9,69 @@ export default function Settings() {
   const [photo, setPhoto] = useState(null);
   const [preview, setPreview] = useState("");
 
+  // ---------------- LOAD USER SAFELY ----------------
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("user"));
-    if (stored) {
-      setUser(stored);
-      setName(stored.name || "");
-      setEmail(stored.email || "");
-      setPreview(
-        stored.profileImage
-          ? `${API.defaults.baseURL}/${stored.profileImage}`
-          : ""
-      );
+    try {
+      const stored = JSON.parse(localStorage.getItem("user"));
+      if (stored && typeof stored === "object") {
+        setUser(stored);
+        setName(stored.name || "");
+        setEmail(stored.email || "");
+
+        if (stored.profileImage) {
+          setPreview(`${API.defaults.baseURL}/${stored.profileImage}`);
+        }
+      }
+    } catch {
+      localStorage.removeItem("user");
     }
   }, []);
 
   const handlePhotoChange = (file) => {
+    if (!file) return;
     setPhoto(file);
     setPreview(URL.createObjectURL(file));
   };
 
+  // ---------------- SAVE PROFILE (FULLY FIXED) ----------------
   const handleSave = async () => {
     try {
       const formData = new FormData();
       formData.append("name", name);
       formData.append("email", email);
-
-      // ✅ MUST MATCH MULTER
       if (photo) formData.append("profileImage", photo);
 
       const res = await API.put("/api/users/profile", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      localStorage.setItem("user", JSON.stringify(res.data));
+      // 🔥 YOUR API RETURNS res.data.user (THIS WAS THE BUG)
+      const apiUser = res.data.user;
+
+      // ✅ NORMALIZE IMAGE STRING
+      const normalizedUser = {
+        ...apiUser,
+        profileImage:
+          typeof apiUser.profileImage === "string"
+            ? apiUser.profileImage
+            : apiUser.profileImage?.path || "",
+      };
+
+      localStorage.setItem("user", JSON.stringify(normalizedUser));
+      setUser(normalizedUser);
+
+      setPreview(
+        normalizedUser.profileImage
+          ? `${API.defaults.baseURL}/${normalizedUser.profileImage}`
+          : ""
+      );
+
+      // Sync dashboard instantly
+      window.dispatchEvent(new Event("storage"));
+
       alert("Profile updated successfully!");
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("Profile update failed:", error);
       alert("Failed to update profile");
     }
   };
@@ -60,6 +87,9 @@ export default function Settings() {
           <div className="flex items-center gap-6 mb-8">
             <img
               src={preview || "https://i.pravatar.cc/100"}
+              onError={(e) =>
+                (e.currentTarget.src = "https://i.pravatar.cc/100")
+              }
               className="w-24 h-24 rounded-full object-cover border"
               alt="Profile"
             />
