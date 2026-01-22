@@ -21,7 +21,7 @@ import sprParadiseImg from "../assets/services/spr-paradise.jpg";
 import JKTyresImg from "../assets/services/jktyres.png";
 import sprMotorsImg from "../assets/services/sprmotors.png"
 import dhanushminesImg from "../assets/services/dhanushmines.png"
-import BlueMetal from "../assets/BlueMetal/Bluemetal.png";
+import BlueMetal from "../assets/BlueMetal/BlueMetal.png";
 import sprTransport from "../assets/services/SPR.png";
 import PartnersSlider from "../components/PartnersSlider";
 export default function Dashboard() {
