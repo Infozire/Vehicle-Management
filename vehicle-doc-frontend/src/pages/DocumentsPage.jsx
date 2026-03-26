@@ -8,6 +8,8 @@ export default function DocumentsPage() {
   const [vehicles, setVehicles] = useState([]);
   const [search, setSearch] = useState("");
   const [previewFile, setPreviewFile] = useState(null);
+  const [selectedDoc, setSelectedDoc] = useState(null); // ✅ NEW
+  const [mobileNumber, setMobileNumber] = useState(""); // ✅ NEW
   const [loading, setLoading] = useState(true);
 
   /* 📦 Fetch documents & vehicles */
@@ -31,54 +33,103 @@ export default function DocumentsPage() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
-const getVehicleId = (vehicle) => {
-  if (!vehicle) return null;
 
-  // If populated
-  if (typeof vehicle === "object" && vehicle._id) {
-    return vehicle._id.toString();
-  }
+  const getVehicleId = (vehicle) => {
+    if (!vehicle) return null;
 
-  // If Mongo $oid format
-  if (typeof vehicle === "object" && vehicle.$oid) {
-    return vehicle.$oid;
-  }
+    if (typeof vehicle === "object" && vehicle._id) {
+      return vehicle._id.toString();
+    }
 
-  // If already string
-  return vehicle.toString();
-};
+    if (typeof vehicle === "object" && vehicle.$oid) {
+      return vehicle.$oid;
+    }
 
-  /* 🚀 Vehicle ID → Vehicle Number map (KEY FIX) */
- const vehicleMap = useMemo(() => {
-  const map = {};
-  vehicles.forEach((v) => {
-    map[v._id.toString()] = v.vehicle_number;
-  });
-  return map;
-}, [vehicles]);
+    return vehicle.toString();
+  };
 
+  /* 🚀 Vehicle Map */
+  const vehicleMap = useMemo(() => {
+    const map = {};
+    vehicles.forEach((v) => {
+      map[v._id.toString()] = v.vehicle_number;
+    });
+    return map;
+  }, [vehicles]);
 
   /* 🔍 Search */
- const filteredDocs = useMemo(() => {
-  return documents.filter((d) =>
-    `${d.document_type} ${vehicleMap[getVehicleId(d.vehicle)] || ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
-}, [documents, vehicleMap, search]);
-
+  const filteredDocs = useMemo(() => {
+    return documents.filter((d) =>
+      `${d.document_type} ${vehicleMap[getVehicleId(d.vehicle)] || ""}`
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    );
+  }, [documents, vehicleMap, search]);
 
   /* 👁️ Preview */
-  const handlePreview = (filePath) => {
-    if (!filePath) return;
+  const handlePreview = (doc) => {
+    const filePath = doc.file_path;
 
     const url = filePath.startsWith("http")
       ? filePath
       : `${API.defaults.baseURL}/${filePath.replace(/\\/g, "/")}`;
 
     setPreviewFile(url);
+    setSelectedDoc(doc);     // ✅ STORE DOC
+    setMobileNumber("");     // ✅ RESET INPUT
   };
 
+  /* 📲 WhatsApp Share */
+  const handleShare = () => {
+    if (!mobileNumber || mobileNumber.length < 10) {
+      alert("Enter valid mobile number");
+      return;
+    }
+
+    const vehicleNumber =
+      vehicleMap[getVehicleId(selectedDoc?.vehicle)] || "Unknown";
+
+    const message = `
+🚚 Vehicle: ${vehicleNumber}
+📄 Document: ${selectedDoc?.document_type}
+
+🔗 View Document:
+${previewFile}
+    `;
+
+    const whatsappUrl = `https://wa.me/91${mobileNumber}?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, "_blank");
+  };
+const handleDirectShare = (doc) => {
+  const number = prompt("Enter Driver WhatsApp Number");
+
+  if (!number || number.length < 10) {
+    alert("Enter valid mobile number");
+    return;
+  }
+
+  const vehicleNumber =
+    vehicleMap[getVehicleId(doc.vehicle)] || "Unknown";
+
+  const filePath = doc.file_path;
+
+  const url = filePath.startsWith("http")
+    ? filePath
+    : `${API.defaults.baseURL}/${filePath.replace(/\\/g, "/")}`;
+
+  const message = `
+🚚 Vehicle: ${vehicleNumber}
+📄 Document: ${doc.document_type}
+
+🔗 View Document:
+${url}
+  `;
+
+  const whatsappUrl = `https://wa.me/91${number}?text=${encodeURIComponent(message)}`;
+
+  window.open(whatsappUrl, "_blank");
+};
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-[#F4F6FF] via-[#EEF1FA] to-[#E9EDFF]">
       <Sidebar />
@@ -129,10 +180,9 @@ const getVehicleId = (vehicle) => {
                     key={doc._id}
                     className="border-t hover:bg-gray-50 transition"
                   >
-                   <td className="px-6 py-4 font-medium">
-  {vehicleMap[getVehicleId(doc.vehicle)] || "—"}
-</td>
-
+                    <td className="px-6 py-4 font-medium">
+                      {vehicleMap[getVehicleId(doc.vehicle)] || "—"}
+                    </td>
 
                     <td className="px-6 py-4">
                       {doc.document_type}
@@ -149,14 +199,23 @@ const getVehicleId = (vehicle) => {
                         : "—"}
                     </td>
 
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => handlePreview(doc.file_path)}
-                        className="inline-flex items-center gap-2 px-4 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                      >
-                        <Eye size={14} /> Preview
-                      </button>
-                    </td>
+                 <td className="px-6 py-4 flex gap-2">
+  {/* PREVIEW */}
+  <button
+    onClick={() => handlePreview(doc)}
+    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+  >
+    <Eye size={14} /> Preview
+  </button>
+
+  {/* SHARE */}
+  <button
+    onClick={() => handleDirectShare(doc)}
+    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+  >
+    📲 Share
+  </button>
+</td>
                   </tr>
                 ))}
               </tbody>
@@ -167,14 +226,39 @@ const getVehicleId = (vehicle) => {
         {/* PREVIEW MODAL */}
         {previewFile && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-4 max-w-4xl w-full max-h-[85vh] relative overflow-auto">
-              <button
-                onClick={() => setPreviewFile(null)}
-                className="absolute top-2 right-3 text-xl font-bold text-gray-600"
-              >
-                ✕
-              </button>
+            <div className="bg-white rounded-xl p-5 max-w-4xl w-full max-h-[85vh] relative overflow-auto">
 
+              {/* HEADER */}
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-semibold text-lg">Preview & Share</h2>
+
+                <button
+                  onClick={() => setPreviewFile(null)}
+                  className="text-xl font-bold text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* MOBILE INPUT + SHARE */}
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  placeholder="Enter Driver Mobile Number"
+                  value={mobileNumber}
+                  onChange={(e) => setMobileNumber(e.target.value)}
+                  className="flex-1 px-3 py-2 border rounded-lg outline-none"
+                />
+
+                <button
+                  onClick={handleShare}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Share WhatsApp
+                </button>
+              </div>
+
+              {/* PREVIEW */}
               {/\.(jpg|jpeg|png|webp)$/i.test(previewFile) ? (
                 <img
                   src={previewFile}
@@ -184,7 +268,7 @@ const getVehicleId = (vehicle) => {
               ) : (
                 <iframe
                   src={previewFile}
-                  className="w-full h-[80vh] rounded-xl"
+                  className="w-full h-[70vh] rounded-xl"
                   title="Preview"
                 />
               )}

@@ -8,10 +8,39 @@ export function BulkUpload({ onDone }) {
 const parseDate = (value) => {
   if (!value) return null;
 
-  const [dd, mm, yyyy] = value.split("-");
-  if (!dd || !mm || !yyyy) return null;
+  // ✅ Excel numeric date
+  if (typeof value === "number") {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const date = new Date(excelEpoch.getTime() + value * 86400000);
+    return date;
+  }
 
-  return new Date(`${yyyy}-${mm}-${dd}T00:00:00.000Z`);
+  // ✅ Normalize format
+  const cleanValue = value.replace(/\./g, "-").replace(/\//g, "-");
+
+  const parts = cleanValue.split("-");
+  if (parts.length !== 3) return null;
+
+  let [day, month, year] = parts.map(Number);
+
+  // 🚨 Fix wrong order (sometimes Excel gives YYYY-MM-DD)
+  if (year < 100) return null;
+  if (day > 31) {
+    // means format is YYYY-MM-DD
+    [year, month, day] = parts.map(Number);
+  }
+
+return new Date(year, month - 1, day);};
+
+
+
+const getValue = (row, keys) => {
+  for (let key of keys) {
+    if (row[key] !== undefined && row[key] !== "") {
+      return row[key];
+    }
+  }
+  return null;
 };
 
   const handleFile = async (e) => {
@@ -36,8 +65,10 @@ const parseDate = (value) => {
         const data = await file.arrayBuffer();
         const wb = XLSX.read(data);
         const sheet = wb.Sheets[wb.SheetNames[0]];
-        rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        await uploadRows(rows);
+rows = XLSX.utils.sheet_to_json(sheet, {
+  defval: "",
+  raw: false
+});        await uploadRows(rows);
       }
     } catch (err) {
       console.error("File read error:", err);
@@ -56,6 +87,8 @@ const parseDate = (value) => {
     let failed = 0;
 
     for (const row of rows) {
+        console.log("📄 RAW ROW:", row); // ✅ ADD HERE
+
       const vehicleNumber =
         row.vehicleNumber ||
         row["Vehicle Number"] ||
@@ -76,22 +109,50 @@ const parseDate = (value) => {
       }
 
       try {
-await API.post("/api/vehicles", {
+// ✅ Parse first (IMPORTANT)
+const rc = parseDate(getValue(row, ["RC Expiry Date", "RC Expiry"]));
+const fitness = parseDate(getValue(row, ["Fitness Expiry Date", "Fitness Expiry"]));
+const pollution = parseDate(getValue(row, ["Pollution Expiry Date", "Pollution Expiry"]));
+const insurance = parseDate(getValue(row, ["Insurance Expiry Date", "Insurance"]));
+const tnPermit = parseDate(getValue(row, ["Tamil Nadu Permit Expiry", "TN Permit"]));
+const roadTax = parseDate(getValue(row, ["Road Tax Expiry", "Road Tax"]));
+const pyPermit = parseDate(getValue(row, ["Pondicherry Permit Expiry", "PY Permit"]));
+
+// ✅ Log parsed values
+console.log("🧪 PARSED DATES:", {
+  rc,
+  fitness,
+  pollution,
+  insurance,
+  tnPermit,
+  roadTax,
+  pyPermit
+});
+
+// ✅ Prepare payload
+const payload = {
   vehicleNumber: clean(vehicleNumber),
   rto: clean(rto),
   wheel: clean(wheel),
   chassisNo: clean(chassisNo),
   status: clean(status),
 
-  // 🔥 MATCH BACKEND VARIABLE NAMES
-  rcExpiry: parseDate(row["RC Expiry Date"]),
-  insuranceExpiry: parseDate(row["Insurance Expiry Date"]),
-  fitnessExpiry: parseDate(row["Fitness Expiry Date"]),
-  pollutionExpiry: parseDate(row["Pollution Expiry Date"]),
-  tnPermitExpiry: parseDate(row["Tamil Nadu Permit Expiry"]),
-  pyPermitExpiry: parseDate(row["Pondicherry Permit Expiry"]),
-  roadTaxExpiry: parseDate(row["Road Tax Expiry"]),
-});
+  rcExpiry: rc,
+  fitnessExpiry: fitness,
+  pollutionExpiry: pollution,
+  insuranceExpiry: insurance,
+  tnPermitExpiry: tnPermit,
+  roadTaxExpiry: roadTax,
+  pyPermitExpiry: pyPermit
+};
+
+// ✅ Log final payload
+console.log("🚀 FINAL PAYLOAD:", payload);
+
+// ✅ API call
+await API.post("/api/vehicles", payload);
+
+
 
 
         success++;

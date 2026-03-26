@@ -44,12 +44,14 @@ export const createVehicle = async (req, res) => {
       roadTaxExpiry
     } = req.body;
 
+    // ✅ Validate required fields
     if (!vehicleNumber || !chassisNo) {
       return res.status(400).json({
         message: "Vehicle number and chassis number are required"
       });
     }
 
+    // ✅ Check duplicate
     const exists = await Vehicle.findOne({
       vehicle_number: vehicleNumber.toUpperCase()
     });
@@ -58,6 +60,25 @@ export const createVehicle = async (req, res) => {
       return res.status(409).json({ message: "Vehicle already exists" });
     }
 
+    // 🔥 FIX: Safe date converter
+    const toDate = (val) => {
+      if (!val) return null;
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    // 🔥 DEBUG (VERY IMPORTANT)
+    console.log("📥 BACKEND RECEIVED:", {
+      rcExpiry,
+      insuranceExpiry,
+      fitnessExpiry,
+      pollutionExpiry,
+      tnPermitExpiry,
+      pyPermitExpiry,
+      roadTaxExpiry
+    });
+
+    // ✅ Create vehicle with SAFE dates
     const vehicle = await Vehicle.create({
       vehicle_number: vehicleNumber.toUpperCase(),
       rto,
@@ -65,13 +86,15 @@ export const createVehicle = async (req, res) => {
       chassis_no: chassisNo,
       status: status || "Active",
       customer,
-      rc_expiry: rcExpiry,
-      insurance_expiry: insuranceExpiry,
-      fitness_expiry: fitnessExpiry,
-      pollution_expiry: pollutionExpiry,
-      tn_permit_expiry: tnPermitExpiry || null,
-      py_permit_expiry: pyPermitExpiry || null,
-      road_tax_expiry: roadTaxExpiry || null,
+
+      rc_expiry: toDate(rcExpiry),
+      insurance_expiry: toDate(insuranceExpiry),
+      fitness_expiry: toDate(fitnessExpiry),
+      pollution_expiry: toDate(pollutionExpiry),
+
+      tn_permit_expiry: toDate(tnPermitExpiry),
+      py_permit_expiry: toDate(pyPermitExpiry),
+      road_tax_expiry: toDate(roadTaxExpiry),
     });
 
     res.status(201).json({
@@ -84,6 +107,7 @@ export const createVehicle = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 
 export const updateVehicle = async (req, res) => {
