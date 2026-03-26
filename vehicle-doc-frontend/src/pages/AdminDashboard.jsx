@@ -161,6 +161,7 @@ export default function AdminDashboard() {
     formData.append("document", file);
     formData.append("vehicle", selectedVehicle);
     formData.append("document_type", docType);
+    
 
     try {
       setUploading(true);
@@ -213,10 +214,7 @@ export default function AdminDashboard() {
       console.error("Error approving user:", err);
     }
   };
-  const safeProfileImage =
-    typeof currentUser?.profileImage === "string"
-      ? currentUser.profileImage
-      : currentUser?.profileImage?.path || "";
+ 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-[#F4F6FF] via-[#EEF1FA] to-[#E9EDFF]">
       <Sidebar pendingRequests={pendingUsers.length} />
