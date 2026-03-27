@@ -1,7 +1,5 @@
 import axios from 'axios';
 
-import axios from "axios";
-
 export const sendWhatsAppImage = async (req, res) => {
   try {
     const { number, imageUrl, caption } = req.body;
