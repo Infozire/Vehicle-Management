@@ -111,15 +111,15 @@ const handleDirectShare = async (doc) => {
   }
 
   const vehicleNumber = vehicleMap[getVehicleId(doc.vehicle)] || "Unknown";
-  const caption = `🚚 Vehicle: ${vehicleNumber}\n📄 Document: ${doc.document_type}`;
 
   try {
     // Send only filename (backend will read and convert to base64)
-    await API.post("/api/send-whatsapp", {
-      number,
-      fileName: doc.file_path.split("/").pop(),
-      caption,
-    });
+await API.post("/api/send-whatsapp", {
+  number,
+  fileName: doc.file_path.split("/").pop(),
+  vehicleNumber,
+  documentType: doc.document_type,
+});
 
     alert("✅ WhatsApp sent successfully");
   } catch (err) {

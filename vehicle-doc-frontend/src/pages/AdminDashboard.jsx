@@ -612,7 +612,6 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
             </div>
           </div>
         )}
-        /* ✅ PASTE HERE */
 {showExpiryModal && (
   <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
     <div className="bg-white rounded-xl p-6 w-[700px] max-h-[80vh] overflow-auto">

@@ -2,25 +2,46 @@ import axios from "axios";
 
 export const sendWhatsAppImage = async (req, res) => {
   try {
-    const { number, fileName, caption } = req.body;
+    const { number, fileName, vehicleNumber, documentType } = req.body;
 
-    // ✅ Public image URL (VERY IMPORTANT)
+    // ✅ Public image URL
     const imageUrl = `https://sprtransports.com/uploads/${fileName}`;
 
-    // ✅ Gupshup payload (NO base64)
+    // ✅ TEMPLATE PAYLOAD (IMPORTANT CHANGE)
     const payload = {
-      type: "image",
-      originalUrl: imageUrl,
-      previewUrl: imageUrl,
-      caption: caption,
+      type: "template",
+      template: {
+        name: "vehicle_document_alert_v2", // ✅ exact template name
+        language: { code: "en" },
+        components: [
+          {
+            type: "header",
+            parameters: [
+              {
+                type: "image",
+                image: {
+                  link: imageUrl, // ✅ image comes here
+                },
+              },
+            ],
+          },
+          {
+            type: "body",
+            parameters: [
+              { type: "text", text: vehicleNumber },
+              { type: "text", text: documentType },
+            ],
+          },
+        ],
+      },
     };
 
     const response = await axios.post(
       "https://api.gupshup.io/wa/api/v1/msg",
       new URLSearchParams({
         channel: "whatsapp",
-        source: "15559128406",        // your Gupshup number
-        destination: `91${number}`,   // driver number
+        source: "15559128406",
+        destination: `91${number}`,
         message: JSON.stringify(payload),
       }),
       {
@@ -31,10 +52,12 @@ export const sendWhatsAppImage = async (req, res) => {
       }
     );
 
+    console.log("GUPSHUP RESPONSE:", response.data);
+
     res.json({ success: true, data: response.data });
 
   } catch (err) {
-    console.error(err.response?.data || err.message);
+    console.error("ERROR:", err.response?.data || err.message);
     res.status(500).json({ message: "WhatsApp send failed" });
   }
 };
