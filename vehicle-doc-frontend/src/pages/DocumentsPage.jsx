@@ -104,38 +104,27 @@ ${previewFile}
     window.open(whatsappUrl, "_blank");
   };
 const handleDirectShare = async (doc) => {
-  // Prompt for driver number
   const number = prompt("Enter Driver WhatsApp Number");
-
   if (!number || number.length < 10) {
-    alert("Enter a valid 10-digit mobile number");
+    alert("Enter valid mobile number");
     return;
   }
 
-  // Get vehicle number
   const vehicleNumber = vehicleMap[getVehicleId(doc.vehicle)] || "Unknown";
-
-  // Convert file path to PUBLIC URL
-  const filePath = doc.file_path;
-  const imageUrl = filePath.startsWith("http")
-    ? filePath
-    : `https://sprtransports.com/api/${filePath.replace(/\\/g, "/")}`; // Replace with your deployed base URL
-
-  // Caption for WhatsApp image
   const caption = `🚚 Vehicle: ${vehicleNumber}\n📄 Document: ${doc.document_type}`;
 
   try {
-    // Call backend API to send via Gupshup
+    // Send only filename (backend will read and convert to base64)
     await API.post("/api/send-whatsapp", {
       number,
-      imageUrl,
+      fileName: doc.file_path.split("/").pop(),
       caption,
     });
 
-    alert("✅ WhatsApp sent successfully!");
+    alert("✅ WhatsApp sent successfully");
   } catch (err) {
-    console.error(err.response?.data || err.message);
-    alert("❌ Failed to send WhatsApp. Check console for details.");
+    console.error(err);
+    alert("❌ Failed to send WhatsApp");
   }
 };
 
