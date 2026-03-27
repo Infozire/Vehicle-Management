@@ -82,27 +82,27 @@ const [expiryData, setExpiryData] = useState({});
   };
 
   /* 📲 WhatsApp Share */
-  const handleShare = () => {
-    if (!mobileNumber || mobileNumber.length < 10) {
-      alert("Enter valid mobile number");
-      return;
-    }
+//   const handleShare = () => {
+//     if (!mobileNumber || mobileNumber.length < 10) {
+//       alert("Enter valid mobile number");
+//       return;
+//     }
 
-    const vehicleNumber =
-      vehicleMap[getVehicleId(selectedDoc?.vehicle)] || "Unknown";
+//     const vehicleNumber =
+//       vehicleMap[getVehicleId(selectedDoc?.vehicle)] || "Unknown";
 
-    const message = `
-🚚 Vehicle: ${vehicleNumber}
-📄 Document: ${selectedDoc?.document_type}
+//     const message = `
+// 🚚 Vehicle: ${vehicleNumber}
+// 📄 Document: ${selectedDoc?.document_type}
 
-🔗 View Document:
-${previewFile}
-    `;
+// 🔗 View Document:
+// ${previewFile}
+//     `;
 
-    const whatsappUrl = `https://wa.me/91${mobileNumber}?text=${encodeURIComponent(message)}`;
+//     const whatsappUrl = `https://wa.me/91${mobileNumber}?text=${encodeURIComponent(message)}`;
 
-    window.open(whatsappUrl, "_blank");
-  };
+//     window.open(whatsappUrl, "_blank");
+//   };
 const handleDirectShare = async (doc) => {
   const number = prompt("Enter Driver WhatsApp Number");
   if (!number || number.length < 10) {
@@ -328,12 +328,13 @@ const handleEdit = (doc) => {
                   className="flex-1 px-3 py-2 border rounded-lg outline-none"
                 />
 
-                <button
-                  onClick={handleShare}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  Share WhatsApp
-                </button>
+             <button
+  onClick={() => handleDirectShare(selectedDoc)}
+  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+>
+  📲 Send Image
+</button>
+
               </div>
 
               {/* PREVIEW */}
