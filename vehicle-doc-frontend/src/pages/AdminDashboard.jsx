@@ -110,25 +110,39 @@ export default function AdminDashboard() {
       clearVehicleUI();
     }
   };
+const handlePreview = (type) => {
+  const front = getDocPath(type, "front");
+  const back = getDocPath(type, "back");
 
+  if (!front && !back) {
+    alert("No file uploaded");
+    return;
+  }
+
+  setPreviewFile({ front, back }); // ✅ store both
+};
   const clearVehicleUI = () => {
     setSelectedVehicle("");
     setVehicleDetails(null);
   };
 
   // ---------------- DOCUMENT HELPERS ----------------
-  const getDocPath = (type) => {
-    if (!selectedVehicle || documents.length === 0) return null;
+ const getDocPath = (type, side = "front") => {
+  if (!selectedVehicle || documents.length === 0) return null;
 
-    const doc = documents.find((d) => {
-      if (!d || !d.vehicle) return false;
+  const doc = documents.find((d) => {
+    const vehicleId =
+      typeof d.vehicle === "object" ? d.vehicle?._id : d.vehicle;
 
-      const vehicleId = typeof d.vehicle === "object" ? d.vehicle?._id : d.vehicle;
-      return d.document_type === type && vehicleId === selectedVehicle;
-    });
+    return (
+      d.document_type === type &&
+      d.side === side && // ✅ IMPORTANT
+      vehicleId === selectedVehicle
+    );
+  });
 
-    return doc?.file_path ? doc.file_path.replace(/\\/g, "/") : null;
-  };
+  return doc?.file_path ? doc.file_path.replace(/\\/g, "/") : null;
+};
 
   const vehiclePhotoPath = useMemo(() => getDocPath("Vehicle Photo"), [selectedVehicle, documents]);
 
@@ -151,7 +165,7 @@ export default function AdminDashboard() {
     return new Date(date).toLocaleDateString("en-GB");
   };
 
-  const handleFileUpload = async (file, docType) => {
+  const handleFileUpload = async (file, docType, side = "front") => {
     if (!selectedVehicle) {
       alert("Please select a vehicle first");
       return;
@@ -161,7 +175,8 @@ export default function AdminDashboard() {
     formData.append("document", file);
     formData.append("vehicle", selectedVehicle);
     formData.append("document_type", docType);
-    
+    formData.append("side", side); // ✅ NEW
+
 
     try {
       setUploading(true);
@@ -178,12 +193,13 @@ export default function AdminDashboard() {
     }
   };
 
-  const handlePreview = (filePath) => {
-    const url = filePath.startsWith("http")
-      ? filePath
-      : `${API.defaults.baseURL}/${filePath.replace(/^\/+/, "")}`;
-    setPreviewFile(url);
-  };
+// {previewFile?.front && (
+//   <img src={`${API.defaults.baseURL}/${previewFile.front}`} />
+// )}
+
+{previewFile?.back && (
+  <img src={`${API.defaults.baseURL}/${previewFile.back}`} />
+)}
   const normalizeUser = (user) => {
     if (!user) return null;
 
@@ -345,12 +361,8 @@ export default function AdminDashboard() {
                     )
                   }
                   expiryDate={getExpiryDate(title)}
-                  onUpload={(file) => handleFileUpload(file, title)}
-                  onPreview={() => {
-                    const path = getDocPath(title);
-                    if (!path) return alert("No file uploaded");
-                    handlePreview(path);
-                  }}
+onUpload={(file, side) => handleFileUpload(file, title, side)}
+                 onPreview={() => handlePreview(title)}
                   uploading={uploading}
                 />
               ))}
@@ -428,13 +440,54 @@ export default function AdminDashboard() {
                 ✕
               </button>
 
-              {/\.(jpg|jpeg|png|webp)$/i.test(previewFile) && (
-                <img src={previewFile} alt="Preview" className="w-full object-contain rounded-xl" />
-              )}
+             {previewFile?.front && (
+  <img
+    src={`${API.defaults.baseURL}/${previewFile.front}`}
+    className="w-full object-contain rounded-xl mb-3"
+    alt="Front"
+  />
+)}
 
-              {previewFile.endsWith(".pdf") && (
-                <iframe src={previewFile} title="PDF Preview" className="w-full h-[80vh] rounded-xl" />
-              )}
+{previewFile?.back && (
+  <img
+    src={`${API.defaults.baseURL}/${previewFile.back}`}
+    className="w-full object-contain rounded-xl"
+    alt="Back"
+  />
+)}
+{/* FRONT */}
+{previewFile?.front && (
+  /\.(jpg|jpeg|png|webp)$/i.test(previewFile.front) ? (
+    <img
+      src={`${API.defaults.baseURL}/${previewFile.front}`}
+      className="w-full object-contain rounded-xl mb-3"
+      alt="Front"
+    />
+  ) : (
+    <iframe
+      src={`${API.defaults.baseURL}/${previewFile.front}`}
+      className="w-full h-[400px] rounded-xl mb-3"
+      title="Front Preview"
+    />
+  )
+)}
+
+{/* BACK */}
+{previewFile?.back && (
+  /\.(jpg|jpeg|png|webp)$/i.test(previewFile.back) ? (
+    <img
+      src={`${API.defaults.baseURL}/${previewFile.back}`}
+      className="w-full object-contain rounded-xl"
+      alt="Back"
+    />
+  ) : (
+    <iframe
+      src={`${API.defaults.baseURL}/${previewFile.back}`}
+      className="w-full h-[400px] rounded-xl"
+      title="Back Preview"
+    />
+  )
+)}
 
               {!/\.(jpg|jpeg|png|webp|pdf)$/i.test(previewFile) && (
                 <div className="flex items-center justify-center h-full text-gray-500">
@@ -470,7 +523,7 @@ const Input = ({ label, value }) => (
   </div>
 );
 
-const DocCard = ({ title, color, icon, expiryDate, onUpload, onPreview, uploading }) => (
+const DocCard = ({ title, color, icon, expiryDate, onUpload, onPreview, }) => (
   <div className="rounded-2xl shadow-lg overflow-hidden">
     <div className="px-4 py-3 flex flex-col gap-2" style={{ background: color }}>
       <div className="flex items-center gap-3">
@@ -478,17 +531,67 @@ const DocCard = ({ title, color, icon, expiryDate, onUpload, onPreview, uploadin
         <h3 className="font-semibold text-white text-sm">{title}</h3>
       </div>
       <div className="flex w-full gap-2 mt-2">
-        <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#2563EB] hover:bg-[#1E40AF] text-white rounded-lg text-xs font-medium cursor-pointer transition shadow-sm">
-          <Upload size={14} /> {uploading ? "Uploading..." : "Upload"}
-          <input type="file" hidden onChange={(e) => e.target.files[0] && onUpload(e.target.files[0])} />
-        </label>
-        <button
-          type="button"
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/20 text-white rounded-lg text-xs font-medium hover:bg-white/30 transition"
-          onClick={onPreview}
-        >
-          <Eye size={14} /> Preview
-        </button>
+      {title === "RC Book" ? (
+  <div className="flex flex-col gap-2 w-full">
+
+    {/* FRONT */}
+    <label className="flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg text-xs cursor-pointer">
+      <Upload size={14} /> Upload Front
+      <input
+        type="file"
+        hidden
+        onChange={(e) =>
+          e.target.files[0] &&
+          onUpload(e.target.files[0], "front") // ✅ PASS SIDE
+        }
+      />
+    </label>
+
+    {/* BACK */}
+    <label className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs cursor-pointer">
+      <Upload size={14} /> Upload Back
+      <input
+        type="file"
+        hidden
+        onChange={(e) =>
+          e.target.files[0] &&
+          onUpload(e.target.files[0], "back") // ✅ PASS SIDE
+        }
+      />
+    </label>
+
+    {/* PREVIEW */}
+    <button
+      type="button"
+      className="flex items-center justify-center gap-2 px-3 py-2 bg-white/20 text-white rounded-lg text-xs"
+      onClick={onPreview}
+    >
+      <Eye size={14} /> Preview
+    </button>
+  </div>
+) : (
+  <>
+    <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#2563EB] text-white rounded-lg text-xs cursor-pointer">
+      <Upload size={14} /> Upload
+      <input
+        type="file"
+        hidden
+        onChange={(e) =>
+          e.target.files[0] &&
+          onUpload(e.target.files[0]) // normal upload
+        }
+      />
+    </label>
+
+    <button
+      type="button"
+      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/20 text-white rounded-lg text-xs"
+      onClick={onPreview}
+    >
+      <Eye size={14} /> Preview
+    </button>
+  </>
+)}
       </div>
     </div>
     <div className="px-4 py-2 bg-white text-gray-800 text-xs font-medium">

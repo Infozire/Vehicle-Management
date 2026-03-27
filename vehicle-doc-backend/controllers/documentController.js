@@ -20,7 +20,7 @@ export const getDocuments = async (req, res) => {
 // UPLOAD a new document
 export const uploadDocument = async (req, res) => {
   try {
-    const { vehicle, document_type } = req.body;
+    const { vehicle, document_type, side } = req.body; // ✅ ADD side
 
     if (!vehicle || !document_type || !req.file) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -29,9 +29,10 @@ export const uploadDocument = async (req, res) => {
     const doc = new Document({
       vehicle,
       document_type,
+      side: side || "front", // ✅ SAVE SIDE
       original_name: req.file.originalname,
       file_path: req.file.path,
-      uploaded_by: req.user?._id, // optional if using auth
+      uploaded_by: req.user?._id,
     });
 
     await doc.save();
@@ -41,7 +42,6 @@ export const uploadDocument = async (req, res) => {
     res.status(500).json({ message: "Server error: " + err.message });
   }
 };
-
 // UPDATE document (with optional file replacement)
 export const updateDocument = async (req, res) => {
   try {

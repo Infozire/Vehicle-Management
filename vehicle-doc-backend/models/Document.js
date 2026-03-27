@@ -24,6 +24,11 @@ const documentSchema = new mongoose.Schema(
       ],
       required: true,
     },
+ side: {
+      type: String,
+      enum: ["front", "back"],
+      default: "front", // normal docs use front
+    },
 
     original_name: {
       type: String,

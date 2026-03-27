@@ -11,6 +11,8 @@ export default function DocumentsPage() {
   const [selectedDoc, setSelectedDoc] = useState(null); // ✅ NEW
   const [mobileNumber, setMobileNumber] = useState(""); // ✅ NEW
   const [loading, setLoading] = useState(true);
+const [editVehicle, setEditVehicle] = useState(null);
+const [expiryData, setExpiryData] = useState({});
 
   /* 📦 Fetch documents & vehicles */
   useEffect(() => {
@@ -130,6 +132,39 @@ ${url}
 
   window.open(whatsappUrl, "_blank");
 };
+const handleUpdateExpiry = async () => {
+  try {
+    await API.put(`/api/vehicles/${editVehicle._id}`, expiryData);
+
+    alert("Updated successfully");
+
+    setEditVehicle(null);
+
+    // refresh vehicles
+    const res = await API.get("/api/vehicles");
+    setVehicles(res.data);
+
+  } catch (err) {
+    console.error(err);
+    alert("Update failed");
+  }
+};
+
+const handleEdit = (doc) => {
+  const vehicleId = getVehicleId(doc.vehicle);
+  const vehicle = vehicles.find(v => v._id === vehicleId);
+
+  setEditVehicle(vehicle);
+
+  setExpiryData({
+    rc_expiry: vehicle?.rc_expiry?.substring(0, 10) || "",
+    insurance_expiry: vehicle?.insurance_expiry?.substring(0, 10) || "",
+    fitness_expiry: vehicle?.fitness_expiry?.substring(0, 10) || "",
+    pollution_expiry: vehicle?.pollution_expiry?.substring(0, 10) || "",
+    road_tax_expiry: vehicle?.road_tax_expiry?.substring(0, 10) || "",
+  });
+};
+
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-[#F4F6FF] via-[#EEF1FA] to-[#E9EDFF]">
       <Sidebar />
@@ -207,6 +242,46 @@ ${url}
   >
     <Eye size={14} /> Preview
   </button>
+{editVehicle && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl w-[500px]">
+
+      <h2 className="text-lg font-semibold mb-4">
+        Edit Expiry Dates - {editVehicle.vehicle_number}
+      </h2>
+
+      {Object.keys(expiryData).map((key) => (
+        <div key={key} className="mb-3">
+          <label className="block text-sm mb-1">{key}</label>
+          <input
+            type="date"
+            value={expiryData[key]}
+            onChange={(e) =>
+              setExpiryData({ ...expiryData, [key]: e.target.value })
+            }
+            className="w-full border px-3 py-2 rounded"
+          />
+        </div>
+      ))}
+
+      <div className="flex justify-end gap-2 mt-4">
+        <button
+          onClick={() => setEditVehicle(null)}
+          className="px-4 py-2 bg-gray-400 text-white rounded"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleUpdateExpiry}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          Update
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
   {/* SHARE */}
   <button
@@ -214,6 +289,12 @@ ${url}
     className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
   >
     📲 Share
+  </button>
+    <button
+    onClick={() => handleEdit(doc)}
+    className="px-3 py-1.5 bg-yellow-500 text-white rounded-lg"
+  >
+    ✏️ Edit Expiry
   </button>
 </td>
                   </tr>
