@@ -1,26 +1,32 @@
 import axios from 'axios';
 
+import axios from "axios";
+
 export const sendWhatsAppImage = async (req, res) => {
   try {
     const { number, imageUrl, caption } = req.body;
+
+    // Prepare payload for Gupshup API
+    const payload = {
+      type: "image",
+      image: {
+        url: imageUrl,       // Publicly accessible image URL
+        caption: caption,    // Text shown below the image
+      },
+    };
 
     const response = await axios.post(
       "https://api.gupshup.io/wa/api/v1/msg",
       new URLSearchParams({
         channel: "whatsapp",
-        source: "15559128406",
-        destination: `91${number}`,
-        message: JSON.stringify({
-          type: "image",
-          originalUrl: imageUrl,
-          previewUrl: imageUrl,
-          caption: caption,
-        }),
+        source: "15559128406",        // Your Gupshup registered number
+        destination: `91${number}`,   // Recipient number with country code
+        message: JSON.stringify(payload),
       }),
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          apikey: "sk_ef69e139f8114fe6a6bba62a318bc459",
+          apikey: "sk_ef69e139f8114fe6a6bba62a318bc459", // Your Gupshup API key
         },
       }
     );
