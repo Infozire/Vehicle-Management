@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 
 export const sendWhatsAppImage = async (req, res) => {
   try {
@@ -6,24 +6,25 @@ export const sendWhatsAppImage = async (req, res) => {
 
     const payload = {
       type: "image",
-      originalUrl: imageUrl,
-      previewUrl: imageUrl,
-      caption: caption,
+      image: {
+        url: imageUrl,   // Publicly accessible URL
+        caption: caption
+      }
     };
 
     const response = await axios.post(
       "https://api.gupshup.io/wa/api/v1/msg",
       new URLSearchParams({
         channel: "whatsapp",
-        source: "15559128406",
-        destination: `91${number}`,
-        message: JSON.stringify(payload), // ✅ correct
+        source: "15559128406",      // Your Gupshup number
+        destination: `91${number}`, // Recipient number
+        message: JSON.stringify(payload)
       }),
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          apikey: "sk_ef69e139f8114fe6a6bba62a318bc459",
-        },
+          apikey: "sk_ef69e139f8114fe6a6bba62a318bc459"
+        }
       }
     );
 
