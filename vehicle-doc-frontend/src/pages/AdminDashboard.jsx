@@ -24,6 +24,11 @@ export default function AdminDashboard() {
   const [previewFile, setPreviewFile] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentUser, setCurrentUser] = useState(null); // ✅ Current logged-in user
+const [showExpiryModal, setShowExpiryModal] = useState(false);
+const [expiringDocs, setExpiringDocs] = useState([]);
+const [showListModal, setShowListModal] = useState(false);
+const [modalTitle, setModalTitle] = useState("");
+const [modalData, setModalData] = useState([]);
 
   const DOC_COLORS = {
     "RC Book": "from-[#4E7BFF] to-[#2B57E5]",
@@ -88,8 +93,107 @@ export default function AdminDashboard() {
 
     loadUser();
   }, []);
+const expiringSoonCount = useMemo(() => {
+  if (!vehicles.length) return 0;
 
+  const today = new Date();
+  const next30Days = new Date();
+  next30Days.setDate(today.getDate() + 30);
 
+  let count = 0;
+
+  vehicles.forEach((v) => {
+    const dates = [
+      v.rc_expiry,
+      v.insurance_expiry,
+      v.fitness_expiry,
+      v.pollution_expiry,
+      v.tn_permit_expiry,
+      v.py_permit_expiry,
+      v.road_tax_expiry,
+    ];
+
+    dates.forEach((date) => {
+      if (!date) return;
+
+      const expiry = new Date(date);
+
+      if (expiry >= today && expiry <= next30Days) {
+        count++;
+      }
+    });
+  });
+
+  return count;
+}, [vehicles]);
+
+const handleShowExpiring = () => {
+  const today = new Date();
+  const next30Days = new Date();
+  next30Days.setDate(today.getDate() + 30);
+
+  const result = [];
+
+  vehicles.forEach((v) => {
+    const docs = [
+      { type: "RC Book", date: v.rc_expiry },
+      { type: "Insurance", date: v.insurance_expiry },
+      { type: "Fitness", date: v.fitness_expiry },
+      { type: "Pollution", date: v.pollution_expiry },
+      { type: "Tamil Nadu Permit", date: v.tn_permit_expiry },
+      { type: "Pondicherry Permit", date: v.py_permit_expiry },
+      { type: "Road Tax", date: v.road_tax_expiry },
+    ];
+
+    docs.forEach((d) => {
+      if (!d.date) return;
+
+      const expiry = new Date(d.date);
+
+      if (expiry >= today && expiry <= next30Days) {
+        result.push({
+          vehicle: v.vehicle_number,
+          document: d.type,
+          expiry: expiry,
+        });
+      }
+    });
+  });
+
+  setExpiringDocs(result);
+  setShowExpiryModal(true);
+};
+const handleOpenList = (type) => {
+  if (type === "vehicles") {
+    setModalTitle("All Vehicles");
+    setModalData(vehicles);
+  }
+
+  if (type === "users") {
+    setModalTitle("All Users");
+    setModalData(users);
+  }
+
+  if (type === "documents") {
+    setModalTitle("All Documents");
+    setModalData(documents);
+  }
+
+  setShowListModal(true);
+};
+
+const Stat = ({ color, icon, label, value, onClick }) => (
+  <div
+    onClick={onClick}
+    className={`bg-gradient-to-r ${color} rounded-2xl px-6 py-5 flex items-center gap-4 shadow-lg cursor-pointer hover:scale-105 transition`}
+  >
+    <div className="bg-white/20 p-3 rounded-xl text-white">{icon}</div>
+    <div>
+      <p className="text-sm text-white/90">{label}</p>
+      <p className="text-2xl font-bold text-white">{value}</p>
+    </div>
+  </div>
+);
 
   // ---------------- VEHICLE SEARCH ----------------
   const handleVehicleSearch = async () => {
@@ -269,29 +373,37 @@ const handlePreview = (type) => {
         {/* STATS */}
         <div className="grid grid-cols-4 gap-6 mb-12">
           <Stat
-            color="from-[#4E7BFF] to-[#2B57E5]"
-            icon={<FontAwesomeIcon icon={faCar} />}
-            label="Total Vehicles"
-            value={vehicles.length}
-          />
-          <Stat
-            color="from-[#37B2A4] to-[#1F8E82]"
-            icon={<FontAwesomeIcon icon={faUser} />}
-            label="Total Users"
-            value={users.length}
-          />
-          <Stat
-            color="from-[#9C6ADE] to-[#7B4DD8]"
-            icon={<File />}
-            label="Total Documents"
-            value={documents.length}
-          />
-          <Stat
-            color="from-[#FF6A6A] to-[#E23C3C]"
-            icon={<Clock />}
-            label="Expiring Soon"
-            value="15"
-          />
+  color="from-[#4E7BFF] to-[#2B57E5]"
+  icon={<FontAwesomeIcon icon={faCar} />}
+  label="Total Vehicles"
+  value={vehicles.length}
+  onClick={() => handleOpenList("vehicles")}
+/>
+
+<Stat
+  color="from-[#37B2A4] to-[#1F8E82]"
+  icon={<FontAwesomeIcon icon={faUser} />}
+  label="Total Users"
+  value={users.length}
+  onClick={() => handleOpenList("users")}
+/>
+
+<Stat
+  color="from-[#9C6ADE] to-[#7B4DD8]"
+  icon={<File />}
+  label="Total Documents"
+  value={documents.length}
+  onClick={() => handleOpenList("documents")}
+/>
+
+        <Stat
+  color="from-[#FF6A6A] to-[#E23C3C]"
+  icon={<Clock />}
+  label="Expiring Soon"
+  value={expiringSoonCount}
+  onClick={handleShowExpiring}
+/>
+
         </div>
 
         {/* MAIN CONTENT */}
@@ -500,6 +612,146 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
             </div>
           </div>
         )}
+        /* ✅ PASTE HERE */
+{showExpiryModal && (
+  <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+    <div className="bg-white rounded-xl p-6 w-[700px] max-h-[80vh] overflow-auto">
+      
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Expiring Documents</h2>
+        <button
+          onClick={() => setShowExpiryModal(false)}
+          className="text-xl font-bold"
+        >
+          ✕
+        </button>
+      </div>
+
+      {expiringDocs.length === 0 ? (
+        <p>No documents expiring soon</p>
+      ) : (
+        <table className="w-full border">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border px-3 py-2">Vehicle</th>
+              <th className="border px-3 py-2">Document</th>
+              <th className="border px-3 py-2">Expiry Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {expiringDocs.map((d, i) => (
+              <tr key={i}>
+                <td className="border px-3 py-2">{d.vehicle}</td>
+                <td className="border px-3 py-2">{d.document}</td>
+                <td className="border px-3 py-2">
+                  {new Date(d.expiry).toLocaleDateString("en-GB")}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  </div>
+)}
+{showListModal && (
+  <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+    <div className="bg-white rounded-xl p-6 w-[800px] max-h-[80vh] overflow-auto">
+
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">{modalTitle}</h2>
+        <button
+          onClick={() => setShowListModal(false)}
+          className="text-xl font-bold"
+        >
+          ✕
+        </button>
+      </div>
+
+      {modalData.length === 0 ? (
+        <p>No data available</p>
+      ) : (
+        <table className="w-full border text-sm">
+          <thead>
+            <tr className="bg-gray-100">
+
+              {modalTitle === "All Vehicles" && (
+                <>
+                  <th className="border px-3 py-2">Vehicle No</th>
+                  <th className="border px-3 py-2">RTO</th>
+                  <th className="border px-3 py-2">Status</th>
+                </>
+              )}
+
+              {modalTitle === "All Users" && (
+                <>
+                  <th className="border px-3 py-2">Name</th>
+                  <th className="border px-3 py-2">Email</th>
+                </>
+              )}
+
+              {modalTitle === "All Documents" && (
+                <>
+                  <th className="border px-3 py-2">Vehicle</th>
+                  <th className="border px-3 py-2">Type</th>
+                  <th className="border px-3 py-2">File</th>
+                </>
+              )}
+
+            </tr>
+          </thead>
+
+          <tbody>
+            {modalData.map((item, i) => (
+              <tr key={i}>
+
+                {/* VEHICLES */}
+                {modalTitle === "All Vehicles" && (
+                  <>
+                    <td className="border px-3 py-2">{item.vehicle_number}</td>
+                    <td className="border px-3 py-2">{item.rto}</td>
+                    <td className="border px-3 py-2">{item.status}</td>
+                  </>
+                )}
+
+                {/* USERS */}
+                {modalTitle === "All Users" && (
+                  <>
+                    <td className="border px-3 py-2">{item.name}</td>
+                    <td className="border px-3 py-2">{item.email}</td>
+                  </>
+                )}
+
+                {/* DOCUMENTS */}
+                {modalTitle === "All Documents" && (
+                  <>
+                    <td className="border px-3 py-2">
+                      {item.vehicle?.vehicle_number || "-"}
+                    </td>
+                    <td className="border px-3 py-2">
+                      {item.document_type}
+                    </td>
+                    <td className="border px-3 py-2">
+                      <a
+                        href={`${API.defaults.baseURL}/${item.file_path}`}
+                        target="_blank"
+                        className="text-blue-600 underline"
+                      >
+                        View
+                      </a>
+                    </td>
+                  </>
+                )}
+
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  </div>
+)}
+
       </main>
     </div>
   );
@@ -590,10 +842,12 @@ const DocCard = ({ title, color, icon, expiryDate, onUpload, onPreview, }) => (
     >
       <Eye size={14} /> Preview
     </button>
+    
   </>
 )}
       </div>
     </div>
+    
     <div className="px-4 py-2 bg-white text-gray-800 text-xs font-medium">
       Expiry Date: <span className="font-semibold">{expiryDate}</span>
     </div>

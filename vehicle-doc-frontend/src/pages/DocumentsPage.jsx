@@ -103,7 +103,7 @@ ${previewFile}
 
     window.open(whatsappUrl, "_blank");
   };
-const handleDirectShare = (doc) => {
+const handleDirectShare = async (doc) => {
   const number = prompt("Enter Driver WhatsApp Number");
 
   if (!number || number.length < 10) {
@@ -120,18 +120,23 @@ const handleDirectShare = (doc) => {
     ? filePath
     : `${API.defaults.baseURL}/${filePath.replace(/\\/g, "/")}`;
 
-  const message = `
-🚚 Vehicle: ${vehicleNumber}
-📄 Document: ${doc.document_type}
+  const caption = `🚚 Vehicle: ${vehicleNumber}
+📄 Document: ${doc.document_type}`;
 
-🔗 View Document:
-${url}
-  `;
+  try {
+    await API.post("/api/send-whatsapp", {
+      number,
+      imageUrl: url,
+      caption,
+    });
 
-  const whatsappUrl = `https://wa.me/91${number}?text=${encodeURIComponent(message)}`;
-
-  window.open(whatsappUrl, "_blank");
+    alert("✅ WhatsApp sent successfully");
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to send WhatsApp");
+  }
 };
+
 const handleUpdateExpiry = async () => {
   try {
     await API.put(`/api/vehicles/${editVehicle._id}`, expiryData);

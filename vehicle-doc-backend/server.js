@@ -12,6 +12,7 @@ import vehicleRoutes from "./routes/vehicleRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
+import whatsappRoutes from "./routes/whatsappRoutes.js";
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/auth", authRoutes); // ✅ router only
 app.use("/api/admin", adminRoutes); // <-- new admin routes
+app.use("/api", whatsappRoutes);
 
 // MongoDB Connection
 connectDB();
