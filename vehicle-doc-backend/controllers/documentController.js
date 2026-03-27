@@ -17,7 +17,6 @@ export const getDocuments = async (req, res) => {
   }
 };
 
-// UPLOAD a new document
 export const uploadDocument = async (req, res) => {
   try {
     const { vehicle, document_type, side } = req.body; // ✅ ADD side

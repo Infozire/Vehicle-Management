@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import API from "../api";
 import Sidebar from "../components/Sidebar";
 import { File, Eye, Search } from "lucide-react";
-
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState([]);
   const [vehicles, setVehicles] = useState([]);
