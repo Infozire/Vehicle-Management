@@ -543,7 +543,18 @@ const handlePreview = (type) => {
                       <File className="text-white" size={20} />
                     )
                   }
-                  expiryDate={getExpiryDate(title)}
+expiryDate={getExpiryDate(title)}
+expiryRaw={vehicleDetails?.[
+  {
+    "RC Book": "rc_expiry",
+    "Insurance": "insurance_expiry",
+    "Fitness": "fitness_expiry",
+    "Pollution": "pollution_expiry",
+    "Tamil Nadu Permit": "tn_permit_expiry",
+    "Pondicherry Permit": "py_permit_expiry",
+    "Road Tax": "road_tax_expiry",
+  }[title]
+]}
 onUpload={(file, side) => handleFileUpload(file, title, side)}
                  onPreview={() => handlePreview(title)}
                   uploading={uploading}
@@ -898,81 +909,100 @@ const Input = ({ label, value }) => (
   </div>
 );
 
-const DocCard = ({ title, color, icon, expiryDate, onUpload, onPreview, }) => (
-  <div className="rounded-2xl shadow-lg overflow-hidden">
-    <div className="px-4 py-3 flex flex-col gap-2" style={{ background: color }}>
-      <div className="flex items-center gap-3">
-        <div className="bg-white/20 p-2 rounded-lg flex items-center justify-center">{icon}</div>
-        <h3 className="font-semibold text-white text-sm">{title}</h3>
+const DocCard = ({ title, color, icon, expiryDate, expiryRaw, onUpload, onPreview }) => {
+
+  // ✅ ADD THIS LINE (VERY IMPORTANT)
+  const isExpired = expiryRaw && new Date(expiryRaw) < new Date();
+
+  return (
+    <div className="rounded-2xl shadow-lg overflow-hidden">
+      <div className="px-4 py-3 flex flex-col gap-2" style={{ background: color }}>
+        <div className="flex items-center gap-3">
+          <div className="bg-white/20 p-2 rounded-lg flex items-center justify-center">{icon}</div>
+          <h3 className="font-semibold text-white text-sm">{title}</h3>
+        </div>
+
+        <div className="flex w-full gap-2 mt-2">
+          {title === "RC Book" ? (
+            <div className="flex flex-col gap-2 w-full">
+
+              <label className="flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg text-xs cursor-pointer">
+                <Upload size={14} /> Upload Front
+                <input
+                  type="file"
+                  hidden
+                  onChange={(e) =>
+                    e.target.files[0] &&
+                    onUpload(e.target.files[0], "front")
+                  }
+                />
+              </label>
+
+              <label className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs cursor-pointer">
+                <Upload size={14} /> Upload Back
+                <input
+                  type="file"
+                  hidden
+                  onChange={(e) =>
+                    e.target.files[0] &&
+                    onUpload(e.target.files[0], "back")
+                  }
+                />
+              </label>
+
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 px-3 py-2 bg-white/20 text-white rounded-lg text-xs"
+                onClick={onPreview}
+              >
+                <Eye size={14} /> Preview
+              </button>
+            </div>
+          ) : (
+            <>
+              <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#2563EB] text-white rounded-lg text-xs cursor-pointer">
+                <Upload size={14} /> Upload
+                <input
+                  type="file"
+                  hidden
+                  onChange={(e) =>
+                    e.target.files[0] &&
+                    onUpload(e.target.files[0])
+                  }
+                />
+              </label>
+
+              <button
+                type="button"
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/20 text-white rounded-lg text-xs"
+                onClick={onPreview}
+              >
+                <Eye size={14} /> Preview
+              </button>
+            </>
+          )}
+        </div>
       </div>
-      <div className="flex w-full gap-2 mt-2">
-      {title === "RC Book" ? (
-  <div className="flex flex-col gap-2 w-full">
 
-    {/* FRONT */}
-    <label className="flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg text-xs cursor-pointer">
-      <Upload size={14} /> Upload Front
-      <input
-        type="file"
-        hidden
-        onChange={(e) =>
-          e.target.files[0] &&
-          onUpload(e.target.files[0], "front") // ✅ PASS SIDE
-        }
-      />
-    </label>
+      {/* ✅ FIXED EXPIRY COLOR */}
+      <div className="px-4 py-2 bg-white text-xs font-medium">
+        Expiry Date:{" "}
+        <span
+          className={`font-semibold ${
+            isExpired ? "text-red-600" : "text-gray-800"
+          }`}
+        >
+          {expiryDate}
+        </span>
 
-    {/* BACK */}
-    <label className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs cursor-pointer">
-      <Upload size={14} /> Upload Back
-      <input
-        type="file"
-        hidden
-        onChange={(e) =>
-          e.target.files[0] &&
-          onUpload(e.target.files[0], "back") // ✅ PASS SIDE
-        }
-      />
-    </label>
-
-    {/* PREVIEW */}
-    <button
-      type="button"
-      className="flex items-center justify-center gap-2 px-3 py-2 bg-white/20 text-white rounded-lg text-xs"
-      onClick={onPreview}
-    >
-      <Eye size={14} /> Preview
-    </button>
-  </div>
-) : (
-  <>
-    <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#2563EB] text-white rounded-lg text-xs cursor-pointer">
-      <Upload size={14} /> Upload
-      <input
-        type="file"
-        hidden
-        onChange={(e) =>
-          e.target.files[0] &&
-          onUpload(e.target.files[0]) // normal upload
-        }
-      />
-    </label>
-
-    <button
-      type="button"
-      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/20 text-white rounded-lg text-xs"
-      onClick={onPreview}
-    >
-      <Eye size={14} /> Preview
-    </button>
-    
-  </>
-)}
+        {/* ✅ OPTIONAL LABEL */}
+        {isExpired && (
+          <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded">
+            Expired
+          </span>
+        )}
       </div>
     </div>
-    
-    <div className="px-4 py-2 bg-white text-gray-800 text-xs font-medium">
-      Expiry Date: <span className="font-semibold">{expiryDate}</span>
-    </div>
-  </div>
-);
+  );
+};
+
