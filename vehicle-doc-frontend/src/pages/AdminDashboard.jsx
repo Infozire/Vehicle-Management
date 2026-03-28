@@ -11,6 +11,8 @@ import {
 import Sidebar from "../components/Sidebar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCar, faUser } from "@fortawesome/free-solid-svg-icons";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 export default function AdminDashboard() {
   const [vehicles, setVehicles] = useState([]);
@@ -29,6 +31,8 @@ const [expiringDocs, setExpiringDocs] = useState([]);
 const [showListModal, setShowListModal] = useState(false);
 const [modalTitle, setModalTitle] = useState("");
 const [modalData, setModalData] = useState([]);
+const [expirySearch, setExpirySearch] = useState("");
+const [docFilter, setDocFilter] = useState("ALL");
 
   const DOC_COLORS = {
     "RC Book": "from-[#4E7BFF] to-[#2B57E5]",
@@ -180,6 +184,61 @@ const handleOpenList = (type) => {
   }
 
   setShowListModal(true);
+};
+// ✅ CSV DOWNLOAD
+const downloadCSV = () => {
+  if (expiringDocs.length === 0) {
+    alert("No data to export");
+    return;
+  }
+
+  const rows = [
+    ["Vehicle Number", "Document Type", "Expiry Date"],
+    ...expiringDocs.map((d) => [
+      d.vehicle,
+      d.document,
+      new Date(d.expiry).toLocaleDateString("en-GB"),
+    ]),
+  ];
+
+  const csvContent = rows.map((e) => e.join(",")).join("\n");
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  saveAs(blob, "expiring_documents.csv");
+};
+
+// ✅ EXCEL DOWNLOAD
+const downloadExcel = () => {
+  if (expiringDocs.length === 0) {
+    alert("No data to export");
+    return;
+  }
+
+  const data = expiringDocs.map((d) => ({
+    Vehicle: d.vehicle,
+    Document: d.document,
+    Expiry: new Date(d.expiry).toLocaleDateString("en-GB"),
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Expiring Docs");
+
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "array",
+  });
+
+  const blob = new Blob([excelBuffer], {
+    type:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+
+  saveAs(blob, "expiring_documents.xlsx");
 };
 
 const Stat = ({ color, icon, label, value, onClick }) => (
@@ -334,7 +393,19 @@ const handlePreview = (type) => {
       console.error("Error approving user:", err);
     }
   };
- 
+ const filteredExpiringDocs = useMemo(() => {
+  return expiringDocs.filter((d) => {
+    const matchesVehicle = d.vehicle
+      .toLowerCase()
+      .includes(expirySearch.toLowerCase());
+
+    const matchesDoc =
+      docFilter === "ALL" || d.document === docFilter;
+
+    return matchesVehicle && matchesDoc;
+  });
+}, [expiringDocs, expirySearch, docFilter]);
+
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-[#F4F6FF] via-[#EEF1FA] to-[#E9EDFF]">
       <Sidebar pendingRequests={pendingUsers.length} />
@@ -612,21 +683,76 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
             </div>
           </div>
         )}
+        
 {showExpiryModal && (
   <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+
+
     <div className="bg-white rounded-xl p-6 w-[700px] max-h-[80vh] overflow-auto">
       
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Expiring Documents</h2>
-        <button
-          onClick={() => setShowExpiryModal(false)}
-          className="text-xl font-bold"
-        >
-          ✕
-        </button>
-      </div>
+{/* HEADER */}
+<div className="flex flex-col gap-4 mb-4">
 
-      {expiringDocs.length === 0 ? (
+  {/* TOP ROW */}
+  <div className="flex justify-between items-center flex-wrap gap-3">
+    <h2 className="text-lg font-semibold">Expiring Documents</h2>
+
+    <div className="flex items-center gap-2">
+      <button
+        onClick={downloadCSV}
+        className="px-3 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+      >
+        ⬇ CSV
+      </button>
+
+      <button
+        onClick={downloadExcel}
+        className="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+      >
+        ⬇ Excel
+      </button>
+
+      <button
+        onClick={() => setShowExpiryModal(false)}
+        className="text-xl font-bold ml-2"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+
+  {/* 🔍 SEARCH + FILTER ROW */}
+  <div className="flex flex-col md:flex-row gap-3">
+
+    <input
+      type="text"
+      placeholder="Search Vehicle..."
+      value={expirySearch}
+      onChange={(e) => setExpirySearch(e.target.value)}
+      className="flex-1 px-3 py-2 border rounded-lg"
+    />
+
+    <select
+      value={docFilter}
+      onChange={(e) => setDocFilter(e.target.value)}
+      className="px-3 py-2 border rounded-lg md:w-[220px]"
+    >
+      <option value="ALL">All Documents</option>
+      <option value="RC Book">RC Book</option>
+      <option value="Insurance">Insurance</option>
+      <option value="Fitness">Fitness</option>
+      <option value="Pollution">Pollution</option>
+      <option value="Tamil Nadu Permit">Tamil Nadu Permit</option>
+      <option value="Pondicherry Permit">Pondicherry Permit</option>
+      <option value="Road Tax">Road Tax</option>
+    </select>
+
+  </div>
+
+</div>
+
+
+{filteredExpiringDocs.length === 0 ? (
         <p>No documents expiring soon</p>
       ) : (
         <table className="w-full border">
@@ -638,8 +764,8 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
             </tr>
           </thead>
           <tbody>
-            {expiringDocs.map((d, i) => (
-              <tr key={i}>
+{filteredExpiringDocs.map((d, i) => (
+                <tr key={i}>
                 <td className="border px-3 py-2">{d.vehicle}</td>
                 <td className="border px-3 py-2">{d.document}</td>
                 <td className="border px-3 py-2">
