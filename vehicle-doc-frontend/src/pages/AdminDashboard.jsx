@@ -611,7 +611,6 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
             </table>
           )}
         </div>
-
         {/* ---------------- PREVIEW MODAL ---------------- */}
         {previewFile && (
           <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">

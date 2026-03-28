@@ -3,13 +3,14 @@ import API from "../api";
 import Sidebar from "../components/Sidebar";
 import { File, Eye, Search } from "lucide-react";
 
+
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [search, setSearch] = useState("");
   const [previewFile, setPreviewFile] = useState(null);
-  const [selectedDoc, setSelectedDoc] = useState(null); // ✅ NEW
-  const [mobileNumber, setMobileNumber] = useState(""); // ✅ NEW
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [mobileNumber, setMobileNumber] = useState(""); 
   const [loading, setLoading] = useState(true);
 const [editVehicle, setEditVehicle] = useState(null);
 const [expiryData, setExpiryData] = useState({});
