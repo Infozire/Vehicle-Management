@@ -160,6 +160,61 @@ const handleEdit = (doc) => {
     road_tax_expiry: vehicle?.road_tax_expiry?.substring(0, 10) || "",
   });
 };
+const handleDelete = async (docId) => {
+  const confirmDelete = window.confirm("Are you sure you want to delete this document?");
+
+  if (!confirmDelete) return;
+
+  try {
+    await API.delete(`/api/documents/${docId}`);
+
+    // ✅ remove from UI instantly
+    setDocuments((prev) => prev.filter((d) => d._id !== docId));
+
+    alert("✅ Document deleted successfully");
+  } catch (err) {
+    console.error(err);
+    alert("❌ Delete failed");
+  }
+};
+
+const handleShareAllDocs = async (vehicleId) => {
+  const number = prompt("Enter Driver WhatsApp Number");
+
+  if (!number || number.length < 10) {
+    alert("Enter valid mobile number");
+    return;
+  }
+
+  const vehicleNumber = vehicleMap[vehicleId] || "Unknown";
+
+  // ✅ Get all docs for that vehicle
+  const vehicleDocs = documents.filter(
+    (doc) => getVehicleId(doc.vehicle) === vehicleId
+  );
+
+  if (vehicleDocs.length === 0) {
+    alert("No documents found for this vehicle");
+    return;
+  }
+
+  try {
+    // 🔁 Send one by one
+    for (const doc of vehicleDocs) {
+      await API.post("/api/send-whatsapp", {
+        number,
+        fileName: doc.file_path.split("/").pop().split("\\").pop(),
+        vehicleNumber,
+        documentType: doc.document_type,
+      });
+    }
+
+    alert("✅ All documents sent successfully");
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to send all documents");
+  }
+};
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-[#F4F6FF] via-[#EEF1FA] to-[#E9EDFF]">
@@ -230,14 +285,59 @@ const handleEdit = (doc) => {
                         : "—"}
                     </td>
 
-                 <td className="px-6 py-4 flex gap-2">
-  {/* PREVIEW */}
-  <button
-    onClick={() => handlePreview(doc)}
-    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-  >
-    <Eye size={14} /> Preview
-  </button>
+<td className="px-6 py-4">
+  <div className="flex flex-wrap items-center gap-2">
+
+    {/* PRIMARY ACTION */}
+    <button
+      onClick={() => handlePreview(doc)}
+      className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
+    >
+      <Eye size={16} /> Preview
+    </button>
+
+    {/* SECONDARY ACTIONS */}
+    <button
+      onClick={() => handleDirectShare(doc)}
+      className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+    >
+      📤 Share
+    </button>
+
+    <button
+      onClick={() => handleShareAllDocs(getVehicleId(doc.vehicle))}
+      className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+    >
+      📤Share All
+    </button>
+
+    {/* EDIT */}
+    <button
+      onClick={() => handleEdit(doc)}
+      className="flex items-center gap-1 px-3 py-2 text-sm border border-yellow-400 text-yellow-600 rounded-lg hover:bg-yellow-50 transition"
+    >
+      ✏️ Edit
+    </button>
+
+    {/* DELETE (DANGER) */}
+    <button
+      onClick={() => handleDelete(doc._id)}
+      className="flex items-center gap-1 px-3 py-2 text-sm border border-red-400 text-red-600 rounded-lg hover:bg-red-50 transition"
+    >
+      🗑 Delete
+    </button>
+
+  </div>
+</td>
+
+
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+          )}
+        </div>
 {editVehicle && (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div className="bg-white p-6 rounded-xl w-[500px]">
@@ -269,7 +369,7 @@ const handleEdit = (doc) => {
         </button>
 
         <button
-          onClick={handleUpdateExpiry}
+          onClick={handleUpdateExpiry}  // ✅ NOW USED
           className="px-4 py-2 bg-blue-600 text-white rounded"
         >
           Update
@@ -278,27 +378,6 @@ const handleEdit = (doc) => {
     </div>
   </div>
 )}
-
-  {/* SHARE */}
-  <button
-    onClick={() => handleDirectShare(doc)}
-    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
-  >
-    📲 Share
-  </button>
-    <button
-    onClick={() => handleEdit(doc)}
-    className="px-3 py-1.5 bg-yellow-500 text-white rounded-lg"
-  >
-    ✏️ Edit Expiry
-  </button>
-</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
 
         {/* PREVIEW MODAL */}
         {previewFile && (
