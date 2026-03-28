@@ -654,7 +654,6 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
     />
   )
 )}
-
 {/* BACK */}
 {previewFile?.back && (
   /\.(jpg|jpeg|png|webp)$/i.test(previewFile.back) ? (
