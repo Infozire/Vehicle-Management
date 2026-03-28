@@ -115,7 +115,7 @@ const handleDirectShare = async (doc) => {
     // Send only filename (backend will read and convert to base64)
 await API.post("/api/send-whatsapp", {
   number,
-  fileName: doc.file_path.split("/").pop(),
+fileName: doc.file_path.split("/").pop().split("\\").pop(),
   vehicleNumber,
   documentType: doc.document_type,
 });
