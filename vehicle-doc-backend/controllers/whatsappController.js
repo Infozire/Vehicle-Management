@@ -11,7 +11,7 @@ export const sendWhatsAppImage = async (req, res) => {
     const payload = {
       type: "template",
       template: {
-        name: "vehicle_document_final_v2", // ✅ UPDATED TEMPLATE NAME
+        name: "vehicle_document_final_v1", // ✅ UPDATED TEMPLATE NAME
         language: {
           code: "en"
         },
