@@ -101,8 +101,11 @@ const expiringSoonCount = useMemo(() => {
   if (!vehicles.length) return 0;
 
   const today = new Date();
-  const next30Days = new Date();
-  next30Days.setDate(today.getDate() + 30);
+  today.setHours(0, 0, 0, 0);
+
+  const last15Days = new Date();
+  last15Days.setDate(today.getDate() - 15);
+  last15Days.setHours(0, 0, 0, 0);
 
   let count = 0;
 
@@ -121,8 +124,9 @@ const expiringSoonCount = useMemo(() => {
       if (!date) return;
 
       const expiry = new Date(date);
+      expiry.setHours(0, 0, 0, 0); // ✅ FIX
 
-      if (expiry >= today && expiry <= next30Days) {
+      if (expiry >= last15Days && expiry <= today) {
         count++;
       }
     });
@@ -133,8 +137,11 @@ const expiringSoonCount = useMemo(() => {
 
 const handleShowExpiring = () => {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const next30Days = new Date();
   next30Days.setDate(today.getDate() + 30);
+  next30Days.setHours(0, 0, 0, 0);
 
   const result = [];
 
@@ -153,8 +160,10 @@ const handleShowExpiring = () => {
       if (!d.date) return;
 
       const expiry = new Date(d.date);
+      expiry.setHours(0, 0, 0, 0);
 
-      if (expiry >= today && expiry <= next30Days) {
+      // ✅ INCLUDE EXPIRED ALSO
+      if (expiry <= next30Days) {
         result.push({
           vehicle: v.vehicle_number,
           document: d.type,
@@ -167,6 +176,8 @@ const handleShowExpiring = () => {
   setExpiringDocs(result);
   setShowExpiryModal(true);
 };
+
+
 const handleOpenList = (type) => {
   if (type === "vehicles") {
     setModalTitle("All Vehicles");
@@ -253,6 +264,33 @@ const Stat = ({ color, icon, label, value, onClick }) => (
     </div>
   </div>
 );
+const getExpiryStatus = (date) => {
+  if (!date) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const next30Days = new Date();
+  next30Days.setDate(today.getDate() + 30);
+  next30Days.setHours(0, 0, 0, 0);
+
+  const expiry = new Date(date);
+  expiry.setHours(0, 0, 0, 0);
+
+  if (expiry < today) {
+    return { label: "Expired", color: "bg-red-100 text-red-600" };
+  }
+
+  if (expiry.getTime() === today.getTime()) {
+    return { label: "Today", color: "bg-orange-100 text-orange-600" };
+  }
+
+  if (expiry <= next30Days) {
+    return { label: "Expiring Soon", color: "bg-yellow-100 text-yellow-700" };
+  }
+
+  return { label: "Valid", color: "bg-green-100 text-green-600" };
+};
 
   // ---------------- VEHICLE SEARCH ----------------
   const handleVehicleSearch = async () => {
@@ -778,8 +816,24 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
                 <td className="border px-3 py-2">{d.vehicle}</td>
                 <td className="border px-3 py-2">{d.document}</td>
                 <td className="border px-3 py-2">
-                  {new Date(d.expiry).toLocaleDateString("en-GB")}
-                </td>
+  <div className="flex items-center gap-2">
+    <span>
+      {new Date(d.expiry).toLocaleDateString("en-GB")}
+    </span>
+
+    {(() => {
+      const status = getExpiryStatus(d.expiry);
+      return (
+        <span
+          className={`text-[10px] px-2 py-1 rounded-full font-semibold ${status.color}`}
+        >
+          {status.label}
+        </span>
+      );
+    })()}
+  </div>
+</td>
+
               </tr>
             ))}
           </tbody>
@@ -912,7 +966,35 @@ const Input = ({ label, value }) => (
 const DocCard = ({ title, color, icon, expiryDate, expiryRaw, onUpload, onPreview }) => {
 
   // ✅ ADD THIS LINE (VERY IMPORTANT)
-  const isExpired = expiryRaw && new Date(expiryRaw) < new Date();
+const getStatus = () => {
+  if (!expiryRaw) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const next30Days = new Date();
+  next30Days.setDate(today.getDate() + 30);
+  next30Days.setHours(0, 0, 0, 0);
+
+  const expiry = new Date(expiryRaw);
+  expiry.setHours(0, 0, 0, 0);
+
+  if (expiry < today) {
+    return { label: "Expired", color: "bg-red-100 text-red-600" };
+  }
+
+  if (expiry.getTime() === today.getTime()) {
+    return { label: "Today", color: "bg-orange-100 text-orange-600" };
+  }
+
+  if (expiry <= next30Days) {
+    return { label: "Expiring Soon", color: "bg-yellow-100 text-yellow-700" };
+  }
+
+  return { label: "Valid", color: "bg-green-100 text-green-600" };
+};
+
+const status = getStatus();
 
   return (
     <div className="rounded-2xl shadow-lg overflow-hidden">
@@ -985,23 +1067,22 @@ const DocCard = ({ title, color, icon, expiryDate, expiryRaw, onUpload, onPrevie
       </div>
 
       {/* ✅ FIXED EXPIRY COLOR */}
-      <div className="px-4 py-2 bg-white text-xs font-medium">
-        Expiry Date:{" "}
-        <span
-          className={`font-semibold ${
-            isExpired ? "text-red-600" : "text-gray-800"
-          }`}
-        >
-          {expiryDate}
-        </span>
+      <div className="px-4 py-2 bg-white text-xs font-medium flex items-center gap-2 flex-wrap">
+  <span>Expiry Date:</span>
 
-        {/* ✅ OPTIONAL LABEL */}
-        {isExpired && (
-          <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded">
-            Expired
-          </span>
-        )}
-      </div>
+  <span className="font-semibold text-gray-800">
+    {expiryDate}
+  </span>
+
+  {status && (
+    <span
+      className={`text-[10px] px-2 py-1 rounded-full font-semibold ${status.color}`}
+    >
+      {status.label}
+    </span>
+  )}
+</div>
+
     </div>
   );
 };
