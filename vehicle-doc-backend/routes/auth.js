@@ -116,6 +116,7 @@ router.post("/login", async (req, res) => {
     // ✅ Send Email
     // await sendOTPEmail(user.email, otp);
 console.log("OTP:", otp);
+await sendOTPEmail(user.email, otp);
 
     return res.status(200).json({
       success: true,
