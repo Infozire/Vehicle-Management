@@ -65,21 +65,30 @@ router.post("/register", async (req, res) => {
 
 // helper function
 const sendOTPEmail = async (email, otp) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS, // use app password
-    },
-  });
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Your Login OTP",
-    text: `Your OTP is: ${otp}`,
-  });
+    const result = await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Your Login OTP",
+      text: `Your OTP is: ${otp}`,
+    });
+
+    console.log("SMTP RESULT:", result);
+    return result;
+  } catch (err) {
+    console.log("EMAIL ERROR:", err);
+    throw err;
+  }
 };
+
 
 // LOGIN → STEP 1 (Send OTP)
 router.post("/login", async (req, res) => {
