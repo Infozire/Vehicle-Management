@@ -4,76 +4,46 @@ export const sendWhatsAppImage = async (req, res) => {
   try {
     const { number, fileName, vehicleNumber, documentType } = req.body;
 
-    // ✅ Public image URL
-    const imageUrl = `https://sprtransports.com/uploads/${fileName}`;
+    const destination = number.startsWith("91")
+      ? number
+      : `91${number}`;
 
-    // ✅ TEMPLATE PAYLOAD (FIXED)
-    const payload = {
-      type: "template",
-      template: {
-        name: "vehicle_document_final_v1", // ✅ UPDATED TEMPLATE NAME
-        language: {
-          code: "en"
-        },
-        components: [
-          {
-            type: "header",
-            parameters: [
-              {
-                type: "image",
-                image: {
-                  link: imageUrl // ✅ image URL
-                }
-              }
-            ]
-          },
-          {
-            type: "body",
-            parameters: [
-              {
-                type: "text",
-                text: vehicleNumber // {{1}}
-              },
-              {
-                type: "text",
-                text: documentType // {{2}}
-              }
-            ]
-          }
-        ]
-      }
-    };
+    const fileUrl = `https://sprtransports.com/uploads/${fileName}`;
 
-    // ✅ SEND REQUEST
-    const response = await axios.post(
-      "https://api.gupshup.io/wa/api/v1/msg",
+    // =========================
+    // ✅ TEMPLATE MESSAGE
+    // =========================
+    const templateResponse = await axios.post(
+      "https://api.gupshup.io/sm/api/v1/msg",
       new URLSearchParams({
         channel: "whatsapp",
-        source: "15559128406", // your Gupshup number
-        destination: `91${number}`, // user number
-        message: JSON.stringify(payload)
+        source: process.env.GUPSHUP_SOURCE_NUMBER,
+        destination,
+        message: JSON.stringify({
+          type: "text",
+          text: `Document for ${vehicleNumber} - ${documentType}`
+        })
       }),
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          apikey: "sk_ef69e139f8114fe6a6bba62a318bc459" // 🔴 move to env in production
+          apikey: process.env.GUPSHUP_API_KEY
         }
       }
     );
 
-    console.log("✅ GUPSHUP RESPONSE:", response.data);
+    console.log("✅ SENT:", templateResponse.data);
 
-    res.json({
+    return res.json({
       success: true,
-      data: response.data
+      data: templateResponse.data
     });
 
   } catch (err) {
     console.error("❌ ERROR:", err.response?.data || err.message);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "WhatsApp send failed",
       error: err.response?.data || err.message
     });
   }

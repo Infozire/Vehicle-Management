@@ -1,5 +1,7 @@
 // src/App.js
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate,useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -42,10 +44,45 @@ const ProtectedRoute = ({ children, role }) => {
 
   return children;
 };
+function AutoLogout() {
+  const navigate = useNavigate();
+  const timer = useRef();
 
+  useEffect(() => {
+    const logoutUser = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("role");
+      navigate("/login", { replace: true });
+    };
+
+    const resetTimer = () => {
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => {
+        logoutUser();
+      }, 10 * 60 * 1000); // 10 minutes
+    };
+
+    const events = ["mousemove", "keydown", "click", "scroll"];
+
+    events.forEach((event) => window.addEventListener(event, resetTimer));
+    resetTimer();
+
+    return () => {
+      clearTimeout(timer.current);
+      events.forEach((event) =>
+        window.removeEventListener(event, resetTimer)
+      );
+    };
+  }, [navigate]);
+
+  return null;
+}
 export default function App() {
   return (
     <Router>
+        <AutoLogout />
+
       <ScrollToTop />
       <Routes>
 

@@ -103,9 +103,9 @@ const expiringSoonCount = useMemo(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const last15Days = new Date();
-  last15Days.setDate(today.getDate() - 15);
-  last15Days.setHours(0, 0, 0, 0);
+  const next7Days = new Date();
+  next7Days.setDate(today.getDate() + 7);
+  next7Days.setHours(0, 0, 0, 0);
 
   let count = 0;
 
@@ -124,9 +124,10 @@ const expiringSoonCount = useMemo(() => {
       if (!date) return;
 
       const expiry = new Date(date);
-      expiry.setHours(0, 0, 0, 0); // ✅ FIX
+      expiry.setHours(0, 0, 0, 0);
 
-      if (expiry >= last15Days && expiry <= today) {
+      // ✅ Expiring within 7 days
+      if (expiry >= today && expiry <= next7Days) {
         count++;
       }
     });
@@ -139,9 +140,9 @@ const handleShowExpiring = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const next30Days = new Date();
-  next30Days.setDate(today.getDate() + 30);
-  next30Days.setHours(0, 0, 0, 0);
+  const next7Days = new Date();
+  next7Days.setDate(today.getDate() + 7);
+  next7Days.setHours(0, 0, 0, 0);
 
   const result = [];
 
@@ -162,12 +163,12 @@ const handleShowExpiring = () => {
       const expiry = new Date(d.date);
       expiry.setHours(0, 0, 0, 0);
 
-      // ✅ INCLUDE EXPIRED ALSO
-      if (expiry <= next30Days) {
+      // ✅ only next 7 days
+      if (expiry >= today && expiry <= next7Days) {
         result.push({
           vehicle: v.vehicle_number,
           document: d.type,
-          expiry: expiry,
+          expiry,
         });
       }
     });
@@ -176,8 +177,43 @@ const handleShowExpiring = () => {
   setExpiringDocs(result);
   setShowExpiryModal(true);
 };
+const handleShowExpired = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
+  const result = [];
 
+  vehicles.forEach((v) => {
+    const docs = [
+      { type: "RC Book", date: v.rc_expiry },
+      { type: "Insurance", date: v.insurance_expiry },
+      { type: "Fitness", date: v.fitness_expiry },
+      { type: "Pollution", date: v.pollution_expiry },
+      { type: "Tamil Nadu Permit", date: v.tn_permit_expiry },
+      { type: "Pondicherry Permit", date: v.py_permit_expiry },
+      { type: "Road Tax", date: v.road_tax_expiry },
+    ];
+
+    docs.forEach((d) => {
+      if (!d.date) return;
+
+      const expiry = new Date(d.date);
+      expiry.setHours(0, 0, 0, 0);
+
+      // ✅ Only expired docs
+      if (expiry < today) {
+        result.push({
+          vehicle: v.vehicle_number,
+          document: d.type,
+          expiry,
+        });
+      }
+    });
+  });
+
+  setExpiringDocs(result);
+  setShowExpiryModal(true);
+};
 const handleOpenList = (type) => {
   if (type === "vehicles") {
     setModalTitle("All Vehicles");
@@ -291,7 +327,40 @@ const getExpiryStatus = (date) => {
 
   return { label: "Valid", color: "bg-green-100 text-green-600" };
 };
+const expiredCount = useMemo(() => {
+  if (!vehicles.length) return 0;
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let count = 0;
+
+  vehicles.forEach((v) => {
+    const dates = [
+      v.rc_expiry,
+      v.insurance_expiry,
+      v.fitness_expiry,
+      v.pollution_expiry,
+      v.tn_permit_expiry,
+      v.py_permit_expiry,
+      v.road_tax_expiry,
+    ];
+
+    dates.forEach((date) => {
+      if (!date) return;
+
+      const expiry = new Date(date);
+      expiry.setHours(0, 0, 0, 0);
+
+      // ✅ Already expired
+      if (expiry < today) {
+        count++;
+      }
+    });
+  });
+
+  return count;
+}, [vehicles]);
   // ---------------- VEHICLE SEARCH ----------------
   const handleVehicleSearch = async () => {
     const value = searchTerm.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().trim();
@@ -480,15 +549,20 @@ const handlePreview = (type) => {
           </div>
         </div>
         {/* STATS */}
-        <div className="grid grid-cols-4 gap-6 mb-12">
-          <Stat
+<div className="grid grid-cols-5 gap-6 mb-12">          <Stat
   color="from-[#4E7BFF] to-[#2B57E5]"
   icon={<FontAwesomeIcon icon={faCar} />}
   label="Total Vehicles"
   value={vehicles.length}
   onClick={() => handleOpenList("vehicles")}
 />
-
+<Stat
+  color="from-[#DC2626] to-[#991B1B]"
+  icon={<Clock />}
+  label="Expired"
+  value={expiredCount}
+  onClick={handleShowExpired}
+/>
 <Stat
   color="from-[#37B2A4] to-[#1F8E82]"
   icon={<FontAwesomeIcon icon={faUser} />}
