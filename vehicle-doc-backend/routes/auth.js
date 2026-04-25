@@ -66,33 +66,44 @@ router.post("/register", async (req, res) => {
 // helper function
 const sendOTPEmail = async (email, otp) => {
   try {
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  port: 587,
-  secure: false, // important for production
-  connectionTimeout: 5000,
-  socketTimeout: 5000,
-});
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // TLS (important)
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS, // MUST be App Password
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+      connectionTimeout: 10000,
+      socketTimeout: 10000,
+    });
 
-
-    const result = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    const info = await transporter.sendMail({
+      from: `"SPR Transport" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Your Login OTP",
       text: `Your OTP is: ${otp}`,
+      html: `
+        <div style="font-family:Arial;padding:10px">
+          <h2>SPR Transport OTP</h2>
+          <p>Your OTP is:</p>
+          <h1 style="color:#7A4421">${otp}</h1>
+          <p>This OTP is valid for 5 minutes.</p>
+        </div>
+      `,
     });
 
-    console.log("SMTP RESULT:", result);
-    return result;
+    console.log("📧 Email sent:", info.messageId);
+    return info;
   } catch (err) {
-    console.log("EMAIL ERROR:", err);
+    console.log("❌ EMAIL ERROR:", err.message);
     throw err;
   }
 };
+
 
 
 // LOGIN → STEP 1 (Send OTP)
