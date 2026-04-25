@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import dns from "dns";
+dns.setDefaultResultOrder("ipv4first");
 
 import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
