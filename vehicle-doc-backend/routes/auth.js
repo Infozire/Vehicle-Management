@@ -113,10 +113,16 @@ router.post("/login", async (req, res) => {
     user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 min
     await user.save();
 
-    // ✅ Send Email
-    // await sendOTPEmail(user.email, otp);
-console.log("OTP:", otp);
-await sendOTPEmail(user.email, otp);
+    console.log("OTP:", otp);
+
+    // 🚀 IMPORTANT FIX: DO NOT BLOCK RESPONSE WITH EMAIL
+    sendOTPEmail(user.email, otp)
+      .then(() => {
+        console.log("OTP email sent successfully");
+      })
+      .catch((err) => {
+        console.error("OTP email failed:", err.message);
+      });
 
     return res.status(200).json({
       success: true,
@@ -128,6 +134,7 @@ await sendOTPEmail(user.email, otp);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 // VERIFY OTP → STEP 2 (FINAL LOGIN)
 router.post("/verify-otp", async (req, res) => {
   try {
