@@ -7,15 +7,18 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     profileImage: { type: String },
-      role: { 
-    type: String, 
-    enum: ["user", "admin"], 
-    default: "user"  // ✅ default role
-  },
-  isApproved: {
-  type: Boolean,
-  default: false, // New users are unapproved by default
-},
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+
+      default: "user", // ✅ default role
+    },
+    otp: String,
+    otpExpiry: Date,
+    isApproved: {
+      type: Boolean,
+      default: false, // New users are unapproved by default
+    },
 
     savedPosts: [
       {
@@ -24,7 +27,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true } // ✅ adds createdAt, updatedAt
+  { timestamps: true }, // ✅ adds createdAt, updatedAt
 );
 
 module.exports = mongoose.model("User", userSchema);

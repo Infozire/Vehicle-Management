@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import React, { useState } from "react";
 import API from "../api";
 import { useNavigate, Link } from "react-router-dom";
@@ -9,8 +8,11 @@ import bgImage from "../assets/bgImage.png";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState(1); // ✅ STEP CONTROL
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -18,31 +20,42 @@ export default function Login() {
     setError("");
 
     try {
-      const res = await API.post("/api/auth/login", { email, password });
+      // ✅ STEP 1: SEND OTP
+      if (step === 1) {
+        await API.post("/api/auth/login", { email, password });
+        setStep(2); // move to OTP screen
+      }
 
-      const { token, user } = res.data;
+      // ✅ STEP 2: VERIFY OTP
+      else {
+        const res = await API.post("/api/auth/verify-otp", {
+          email,
+          otp,
+        });
 
-      // ✅ NORMALIZE USER (CRITICAL FIX)
-      const normalizedUser = {
-        ...user,
-        profileImage:
-          typeof user.profileImage === "string"
-            ? user.profileImage
-            : user.profileImage?.path || "",
-      };
+        const { token, user } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(normalizedUser));
+        // Normalize user
+        const normalizedUser = {
+          ...user,
+          profileImage:
+            typeof user.profileImage === "string"
+              ? user.profileImage
+              : user.profileImage?.path || "",
+        };
 
-      // Sync other tabs / dashboard instantly
-      window.dispatchEvent(new Event("storage"));
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(normalizedUser));
 
-      navigate(
-        normalizedUser.role === "admin" ? "/admin" : "/dashboard",
-        { replace: true }
-      );
+        window.dispatchEvent(new Event("storage"));
+
+        navigate(
+          normalizedUser.role === "admin" ? "/admin" : "/dashboard",
+          { replace: true }
+        );
+      }
     } catch (err) {
-      setError(err?.response?.data?.message || "Login failed");
+      setError(err?.response?.data?.message || "Something went wrong");
     }
   };
 
@@ -58,10 +71,8 @@ export default function Login() {
           backgroundRepeat: "no-repeat",
         }}
       >
-        {/* Overlay */}
         <div className="absolute inset-0 bg-black/40"></div>
 
-        {/* Login Form */}
         <div className="relative z-10 w-full max-w-md">
           <form
             onSubmit={handleSubmit}
@@ -71,7 +82,7 @@ export default function Login() {
               className="text-3xl font-bold mb-6 text-center"
               style={{ color: "#7A4421" }}
             >
-              Login
+              {step === 1 ? "Login" : "Enter OTP"}
             </h2>
 
             {error && (
@@ -80,56 +91,79 @@ export default function Login() {
               </div>
             )}
 
-            <div className="mb-4">
-              <input
-                type="email"
-                placeholder="Email"
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#7A4421] focus:ring-2 focus:ring-[#7A4421]/30 transition"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+            {/* ✅ STEP 1: EMAIL + PASSWORD */}
+            {step === 1 && (
+              <>
+                <div className="mb-4">
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
 
-            <div className="relative mb-6">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:border-[#7A4421] focus:ring-2 focus:ring-[#7A4421]/30 transition"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-3.5 text-gray-500 hover:text-gray-700 transition"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
+                <div className="relative mb-6">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 pr-12"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3.5"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* ✅ STEP 2: OTP INPUT */}
+            {step === 2 && (
+              <div className="mb-6">
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 text-center tracking-widest"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                />
+                <p className="text-sm text-gray-500 mt-2 text-center">
+                  OTP sent to {email}
+                </p>
+              </div>
+            )}
 
             <button
               type="submit"
-              className="w-full text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+              className="w-full text-white py-3 rounded-lg font-semibold"
               style={{ backgroundColor: "#7A4421" }}
-              onMouseEnter={(e) =>
-                (e.target.style.backgroundColor = "#6a3a1a")
-              }
-              onMouseLeave={(e) =>
-                (e.target.style.backgroundColor = "#7A4421")
-              }
             >
-              Login
+              {step === 1 ? "Send OTP" : "Verify & Login"}
             </button>
+
+            {/* Back button */}
+            {step === 2 && (
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="mt-3 w-full text-sm text-gray-600 underline"
+              >
+                Back to Login
+              </button>
+            )}
 
             <p className="mt-6 text-sm text-center text-gray-600">
               Don't have an account?{" "}
-              <Link
-                to="/register"
-                className="font-semibold hover:underline transition"
-                style={{ color: "#7A4421" }}
-              >
+              <Link to="/register" className="font-semibold underline">
                 Register
               </Link>
             </p>

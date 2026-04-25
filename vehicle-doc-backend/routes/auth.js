@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";   // note the .js extension is required in ESM
+import nodemailer from "nodemailer";
 
 const router = express.Router();
 
@@ -61,6 +62,26 @@ router.post("/register", async (req, res) => {
 
 
 // LOGIN
+
+// helper function
+const sendOTPEmail = async (email, otp) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS, // use app password
+    },
+  });
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Your Login OTP",
+    text: `Your OTP is: ${otp}`,
+  });
+};
+
+// LOGIN → STEP 1 (Send OTP)
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -75,32 +96,79 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    // ✅ Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-   res.status(200).json({
-  user: {
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    company: user.company,
-    role: user.role,
-    isApproved: user.isApproved,
-    profileImage:
-      typeof user.profileImage === "string"
-        ? user.profileImage
-        : user.profileImage?.path || "",
-  },
-  token,
-});
+    // ✅ Save OTP in DB
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 min
+    await user.save();
+
+    // ✅ Send Email
+    await sendOTPEmail(user.email, otp);
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent to your email",
+    });
 
   } catch (err) {
     console.error("Login Error:", err.message);
     res.status(500).json({ message: "Server error" });
   }
 });
+// VERIFY OTP → STEP 2 (FINAL LOGIN)
+router.post("/verify-otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP required" });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (
+      !user ||
+      user.otp !== otp ||
+      user.otpExpiry < Date.now()
+    ) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // ✅ Clear OTP
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    // ✅ Generate token AFTER OTP verify
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        company: user.company,
+        role: user.role,
+        isApproved: user.isApproved,
+        profileImage:
+          typeof user.profileImage === "string"
+            ? user.profileImage
+            : user.profileImage?.path || "",
+      },
+      token,
+    });
+
+  } catch (err) {
+    console.error("OTP Verify Error:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 export default router;
