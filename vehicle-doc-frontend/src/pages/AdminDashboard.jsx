@@ -167,6 +167,8 @@ const handleShowExpiring = () => {
       if (expiry >= today && expiry <= next7Days) {
         result.push({
           vehicle: v.vehicle_number,
+            wheel: v.wheel, // ✅ ADD THIS
+
           document: d.type,
           expiry,
         });
@@ -204,6 +206,8 @@ const handleShowExpired = () => {
       if (expiry < today) {
         result.push({
           vehicle: v.vehicle_number,
+            wheel: v.wheel, // ✅ ADD THIS
+
           document: d.type,
           expiry,
         });
@@ -880,6 +884,7 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
           <thead>
             <tr className="bg-gray-100">
               <th className="border px-3 py-2">Vehicle</th>
+              <th className="border px-3 py-2">Wheel</th> {/* ✅ NEW */}
               <th className="border px-3 py-2">Document</th>
               <th className="border px-3 py-2">Expiry Date</th>
             </tr>
@@ -888,6 +893,10 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
 {filteredExpiringDocs.map((d, i) => (
                 <tr key={i}>
                 <td className="border px-3 py-2">{d.vehicle}</td>
+                 <td className="border px-3 py-2">
+        {d.wheel || "-"} {/* ✅ NEW */}
+      </td>
+
                 <td className="border px-3 py-2">{d.document}</td>
                 <td className="border px-3 py-2">
   <div className="flex items-center gap-2">
