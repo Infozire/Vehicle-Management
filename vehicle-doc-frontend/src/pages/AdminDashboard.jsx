@@ -949,80 +949,87 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
         <p>No data available</p>
       ) : (
         <table className="w-full border text-sm">
-          <thead>
-            <tr className="bg-gray-100">
+  <thead>
+  <tr className="bg-gray-100">
+    {modalTitle === "All Vehicles" && (
+      <>
+        <th className="border px-3 py-2">S.No</th>
+        <th className="border px-3 py-2">Vehicle No</th>
+        <th className="border px-3 py-2">Wheel</th>
+        <th className="border px-3 py-2">RTO</th>
+        <th className="border px-3 py-2">Status</th>
+      </>
+    )}
 
-              {modalTitle === "All Vehicles" && (
-                <>
-                  <th className="border px-3 py-2">Vehicle No</th>
-                  <th className="border px-3 py-2">RTO</th>
-                  <th className="border px-3 py-2">Status</th>
-                </>
-              )}
+    {modalTitle === "All Users" && (
+      <>
+        <th className="border px-3 py-2">S.No</th>
+        <th className="border px-3 py-2">Name</th>
+        <th className="border px-3 py-2">Email</th>
+      </>
+    )}
 
-              {modalTitle === "All Users" && (
-                <>
-                  <th className="border px-3 py-2">Name</th>
-                  <th className="border px-3 py-2">Email</th>
-                </>
-              )}
+    {modalTitle === "All Documents" && (
+      <>
+        <th className="border px-3 py-2">S.No</th>
+        <th className="border px-3 py-2">Vehicle</th>
+        <th className="border px-3 py-2">Wheel</th>
+        <th className="border px-3 py-2">Type</th>
+        <th className="border px-3 py-2">File</th>
+      </>
+    )}
+  </tr>
+</thead>
 
-              {modalTitle === "All Documents" && (
-                <>
-                  <th className="border px-3 py-2">Vehicle</th>
-                  <th className="border px-3 py-2">Type</th>
-                  <th className="border px-3 py-2">File</th>
-                </>
-              )}
+      <tbody>
+  {modalData.map((item, i) => (
+    <tr key={i}>
+      {/* VEHICLES */}
+      {modalTitle === "All Vehicles" && (
+        <>
+          <td className="border px-3 py-2">{i + 1}</td>
+          <td className="border px-3 py-2">{item.vehicle_number}</td>
+          <td className="border px-3 py-2">{item.wheel || "-"}</td>
+          <td className="border px-3 py-2">{item.rto}</td>
+          <td className="border px-3 py-2">{item.status}</td>
+        </>
+      )}
 
-            </tr>
-          </thead>
+      {/* USERS */}
+      {modalTitle === "All Users" && (
+        <>
+          <td className="border px-3 py-2">{i + 1}</td>
+          <td className="border px-3 py-2">{item.name}</td>
+          <td className="border px-3 py-2">{item.email}</td>
+        </>
+      )}
 
-          <tbody>
-            {modalData.map((item, i) => (
-              <tr key={i}>
-
-                {/* VEHICLES */}
-                {modalTitle === "All Vehicles" && (
-                  <>
-                    <td className="border px-3 py-2">{item.vehicle_number}</td>
-                    <td className="border px-3 py-2">{item.rto}</td>
-                    <td className="border px-3 py-2">{item.status}</td>
-                  </>
-                )}
-
-                {/* USERS */}
-                {modalTitle === "All Users" && (
-                  <>
-                    <td className="border px-3 py-2">{item.name}</td>
-                    <td className="border px-3 py-2">{item.email}</td>
-                  </>
-                )}
-
-                {/* DOCUMENTS */}
-                {modalTitle === "All Documents" && (
-                  <>
-                    <td className="border px-3 py-2">
-                      {item.vehicle?.vehicle_number || "-"}
-                    </td>
-                    <td className="border px-3 py-2">
-                      {item.document_type}
-                    </td>
-                    <td className="border px-3 py-2">
-                      <a
-                        href={`${API.defaults.baseURL}/${item.file_path}`}
-                        target="_blank"
-                        className="text-blue-600 underline"
-                      >
-                        View
-                      </a>
-                    </td>
-                  </>
-                )}
-
-              </tr>
-            ))}
-          </tbody>
+      {/* DOCUMENTS */}
+      {modalTitle === "All Documents" && (
+        <>
+          <td className="border px-3 py-2">{i + 1}</td>
+          <td className="border px-3 py-2">
+            {item.vehicle?.vehicle_number || "-"}
+          </td>
+          <td className="border px-3 py-2">
+            {item.vehicle?.wheel || "-"}
+          </td>
+          <td className="border px-3 py-2">{item.document_type}</td>
+          <td className="border px-3 py-2">
+            <a
+              href={`${API.defaults.baseURL}/${item.file_path}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              View File
+            </a>
+          </td>
+        </>
+      )}
+    </tr>
+  ))}
+</tbody>
         </table>
       )}
     </div>
