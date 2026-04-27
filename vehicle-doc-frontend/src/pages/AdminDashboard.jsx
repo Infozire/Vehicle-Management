@@ -1011,9 +1011,15 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
           <td className="border px-3 py-2">
             {item.vehicle?.vehicle_number || "-"}
           </td>
-          <td className="border px-3 py-2">
-            {item.vehicle?.wheel || "-"}
-          </td>
+        <td className="border px-3 py-2">
+  {(
+    vehicles.find(
+      (v) =>
+        v._id ===
+        (typeof item.vehicle === "object" ? item.vehicle?._id : item.vehicle)
+    )?.wheel || "-"
+  )}
+</td>
           <td className="border px-3 py-2">{item.document_type}</td>
           <td className="border px-3 py-2">
             <a
