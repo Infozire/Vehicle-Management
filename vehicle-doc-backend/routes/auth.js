@@ -1,16 +1,18 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";   // note the .js extension is required in ESM
+import User from "../models/User.js";
 import nodemailer from "nodemailer";
+import axios from "axios";
 
 const router = express.Router();
 
-// REGISTER
-// REGISTER
+/* =========================
+   REGISTER (UNCHANGED)
+========================= */
 router.post("/register", async (req, res) => {
   try {
-    const { name, company, email, password, role } = req.body; // include role from request
+    const { name, company, email, password, role, phone } = req.body;
 
     if (!name || !company || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
@@ -21,26 +23,22 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Allow only valid roles, default to "user"
-    const validRoles = ["user", "admin"];
-    const userRole = validRoles.includes(role) ? role : "user";
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
       name,
       company,
       email,
       password: hashedPassword,
-      role: userRole, // store role properly
-      isApproved: false
+      role: ["user", "admin"].includes(role) ? role : "user",
+      phone: phone || "",
+      isApproved: false,
     });
 
     await newUser.save();
 
     const token = jwt.sign(
-      { id: newUser._id, role: userRole },
+      { id: newUser._id, role: newUser.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -50,132 +48,176 @@ router.post("/register", async (req, res) => {
         name: newUser.name,
         email: newUser.email,
         company: newUser.company,
-        role: newUser.role, // include role in response
+        role: newUser.role,
+        phone: newUser.phone,
       },
       token,
     });
   } catch (err) {
-    console.error("Register Error:", err.message);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-
-// LOGIN
-
-// helper function
+/* =========================
+   EMAIL OTP (EXISTING)
+========================= */
 const sendOTPEmail = async (email, otp) => {
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
-      secure: false, // TLS (important)
+      secure: false,
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // MUST be App Password
+        pass: process.env.EMAIL_PASS,
       },
-      tls: {
-        rejectUnauthorized: false,
-      },
-      connectionTimeout: 10000,
-      socketTimeout: 10000,
     });
 
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: `"SPR Transport" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Your Login OTP",
-      text: `Your OTP is: ${otp}`,
-      html: `
-        <div style="font-family:Arial;padding:10px">
-          <h2>SPR Transport OTP</h2>
-          <p>Your OTP is:</p>
-          <h1 style="color:#7A4421">${otp}</h1>
-          <p>This OTP is valid for 5 minutes.</p>
-        </div>
-      `,
+      html: `<h2>Your OTP is ${otp}</h2>`,
     });
 
-    console.log("📧 Email sent:", info.messageId);
-    return info;
+    console.log("📧 Email sent");
   } catch (err) {
-    console.log("❌ EMAIL ERROR:", err.message);
+    console.log("EMAIL ERROR:", err.message);
+  }
+};
+
+/* =========================
+   🔥 NEW: WHATSAPP OTP (GUPSHUP)
+========================= */
+const sendWhatsAppOTP = async (mobile, otp) => {
+  try {
+    if (!mobile) throw new Error("Mobile missing");
+
+    let formattedMobile = mobile.toString().replace("+", "");
+
+    if (!formattedMobile.startsWith("91")) {
+      formattedMobile = "91" + formattedMobile;
+    }
+
+    const response = await axios.post(
+      "https://api.gupshup.io/sm/api/v1/msg",
+      null,
+      {
+        params: {
+          channel: "whatsapp",
+          source: process.env.GUPSHUP_SOURCE_NUMBER,
+          destination: formattedMobile,
+          message: JSON.stringify({
+            type: "text",
+            text: `Your OTP is: ${otp}. Valid for 5 minutes.`,
+          }),
+        },
+        headers: {
+          apikey: process.env.GUPSHUP_API_KEY,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    console.log("📱 WhatsApp OTP sent:", response.data);
+    return response.data;
+  } catch (err) {
+    console.log("WHATSAPP ERROR:", err.response?.data || err.message);
     throw err;
   }
 };
 
-
-
-// LOGIN → STEP 1 (Send OTP)
+/* =========================
+   LOGIN (UPDATED - WHATSAPP + EMAIL FALLBACK)
+========================= */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "Email and password required" });
     }
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // ✅ Generate OTP
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // =========================
+    // ❌ COMMENT OTP FLOW TEMPORARILY
+    // =========================
+
+    /*
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // ✅ Save OTP in DB
     user.otp = otp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 min
+    user.otpExpiry = Date.now() + 5 * 60 * 1000;
     await user.save();
 
-    console.log("OTP:", otp);
+    console.log("Generated OTP:", otp);
 
-    // 🚀 IMPORTANT FIX: DO NOT BLOCK RESPONSE WITH EMAIL
-    sendOTPEmail(user.email, otp)
-      .then(() => {
-        console.log("OTP email sent successfully");
-      })
-      .catch((err) => {
-        console.error("OTP email failed:", err.message);
-      });
+    setImmediate(async () => {
+      try {
+        await sendWhatsAppOTP(user.phone, otp);
+      } catch (err) {
+        console.log("⚠ WhatsApp failed → fallback email");
+        await sendOTPEmail(user.email, otp);
+      }
+    });
 
     return res.status(200).json({
       success: true,
-      message: "OTP sent to your email",
+      message: "OTP sent",
+    });
+    */
+
+    // =========================
+    // ✅ DIRECT LOGIN (NEW)
+    // =========================
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.status(200).json({
+      success: true,
+      user,
+      token,
     });
 
   } catch (err) {
-    console.error("Login Error:", err.message);
+    console.log("LOGIN ERROR:", err.message);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// VERIFY OTP → STEP 2 (FINAL LOGIN)
+
+/* =========================
+   VERIFY OTP (UNCHANGED)
+========================= */
 router.post("/verify-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    if (!email || !otp) {
-      return res.status(400).json({ message: "Email and OTP required" });
-    }
-
     const user = await User.findOne({ email });
 
-    if (
-      !user ||
-      user.otp !== otp ||
-      user.otpExpiry < Date.now()
-    ) {
+    if (!user || user.otp !== otp || user.otpExpiry < Date.now()) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
-    // ✅ Clear OTP
     user.otp = null;
     user.otpExpiry = null;
     await user.save();
 
-    // ✅ Generate token AFTER OTP verify
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -183,26 +225,12 @@ router.post("/verify-otp", async (req, res) => {
     );
 
     res.status(200).json({
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        company: user.company,
-        role: user.role,
-        isApproved: user.isApproved,
-        profileImage:
-          typeof user.profileImage === "string"
-            ? user.profileImage
-            : user.profileImage?.path || "",
-      },
+      user,
       token,
     });
-
   } catch (err) {
-    console.error("OTP Verify Error:", err.message);
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 export default router;

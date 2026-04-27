@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema(
 
       default: "user", // ✅ default role
     },
+    phone: {
+  type: String,
+  required: true
+},
+
     otp: String,
     otpExpiry: Date,
     isApproved: {

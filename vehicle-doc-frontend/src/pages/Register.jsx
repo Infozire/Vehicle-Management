@@ -17,6 +17,7 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [company, setCompany] = useState("");
   const { loading, error } = useSelector((state) => state.auth);
+const [phone, setPhone] = useState("");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const Register = () => {
       alert("Passwords do not match");
       return;
     }
-    dispatch(registerUser({ name, email, password, company, role })).then((res) => {
+    dispatch(registerUser({ name, email, password, company, role  ,phone,  })).then((res) => {
       if (res.meta.requestStatus === "fulfilled") {
         navigate("/");
       }
@@ -83,6 +84,14 @@ const Register = () => {
                 required
                 className="border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:border-[#7A4421] focus:ring-2 focus:ring-[#7A4421]/30 transition"
               />
+<input
+  type="text"
+  placeholder="Enter mobile number (91XXXXXXXXXX)"
+  value={phone}
+  onChange={(e) => setPhone(e.target.value)}
+  required
+  className="border-2 border-gray-200 rounded-lg px-4 py-3"
+/>
 
               <select
                 value={role}
