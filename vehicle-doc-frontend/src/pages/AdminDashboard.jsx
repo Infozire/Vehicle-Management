@@ -883,6 +883,8 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
         <table className="w-full border">
           <thead>
             <tr className="bg-gray-100">
+                  <th className="border px-3 py-2">S.No</th> {/* ✅ NEW */}
+
               <th className="border px-3 py-2">Vehicle</th>
               <th className="border px-3 py-2">Wheel</th> {/* ✅ NEW */}
               <th className="border px-3 py-2">Document</th>
@@ -892,6 +894,10 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
           <tbody>
 {filteredExpiringDocs.map((d, i) => (
                 <tr key={i}>
+                     <td className="border px-3 py-2 font-semibold">
+        {i + 1} {/* ✅ SERIAL NUMBER */}
+      </td>
+
                 <td className="border px-3 py-2">{d.vehicle}</td>
                  <td className="border px-3 py-2">
         {d.wheel || "-"} {/* ✅ NEW */}
