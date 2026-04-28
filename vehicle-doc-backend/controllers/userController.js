@@ -26,8 +26,10 @@ export const approveUser = async (req, res) => {
 
     const user = await User.findByIdAndUpdate(
       userId,
-      { isApproved: true },
-      { new: true }
+{
+  isApproved: true,
+  isRejected: false,
+},      { new: true }
     );
 
     if (!user) {
@@ -41,6 +43,33 @@ export const approveUser = async (req, res) => {
     });
   } catch (err) {
     console.error("Approve User Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+export const rejectUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        isApproved: false,
+        isRejected: true,
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "User rejected successfully",
+      user,
+    });
+  } catch (err) {
+    console.error("Reject User Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -19,7 +19,6 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
-  const [search, setSearch] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [vehicleDetails, setVehicleDetails] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -504,6 +503,14 @@ const handlePreview = (type) => {
       console.error("Error approving user:", err);
     }
   };
+  const rejectUser = async (id) => {
+  try {
+    await API.put(`/api/users/reject/${id}`);
+    fetchPendingUsers();
+  } catch (err) {
+    console.error("Error rejecting user:", err);
+  }
+};
  const filteredExpiringDocs = useMemo(() => {
   return expiringDocs.filter((d) => {
     const matchesVehicle = d.vehicle
@@ -523,35 +530,44 @@ const handlePreview = (type) => {
 
       <main className="flex-1 px-10 py-8">
         {/* TOP BAR */}
-        <div className="flex justify-between items-center mb-10">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search vehicle by number..."
-            className="w-[440px] px-6 py-3 rounded-2xl bg-white shadow-lg outline-none"
-          />
-          <div className="flex items-center gap-3 bg-white px-5 py-2 rounded-full shadow-lg">
-            <img
-              src={
-                currentUser?.profileImage
-                  ? `${API.defaults.baseURL}/${currentUser.profileImage.replace(/^\/+/, "")}`
-                  : "https://i.pravatar.cc/40"
-              }
-              onError={(e) => {
-                e.currentTarget.src = "https://i.pravatar.cc/40";
-              }}
-              className="rounded-full w-9 h-9 object-cover"
-              alt="User Avatar"
-            />
+{/* TOP BAR */}
+<div className="flex justify-between items-center mb-10">
+  <div className="flex gap-3">
+    <input
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
+      onKeyDown={(e) => e.key === "Enter" && handleVehicleSearch()}
+      placeholder="Search vehicle by number..."
+      className="w-[440px] px-6 py-3 rounded-2xl bg-white shadow-lg outline-none"
+    />
 
+    <button
+      onClick={handleVehicleSearch}
+      className="px-5 py-3 bg-indigo-600 text-white rounded-2xl shadow-lg hover:bg-indigo-700"
+    >
+      Search
+    </button>
+  </div>
 
+  <div className="flex items-center gap-3 bg-white px-5 py-2 rounded-full shadow-lg">
+    <img
+      src={
+        currentUser?.profileImage
+          ? `${API.defaults.baseURL}/${currentUser.profileImage.replace(/^\/+/, "")}`
+          : "https://i.pravatar.cc/40"
+      }
+      onError={(e) => {
+        e.currentTarget.src = "https://i.pravatar.cc/40";
+      }}
+      className="rounded-full w-9 h-9 object-cover"
+      alt="User Avatar"
+    />
 
-
-            <span className="text-sm font-medium">
-              {currentUser?.name || "Admin"}
-            </span>
-          </div>
-        </div>
+    <span className="text-sm font-medium">
+      {currentUser?.name || "Admin"}
+    </span>
+  </div>
+</div>
         {/* STATS */}
 <div className="grid grid-cols-5 gap-6 mb-12">          <Stat
   color="from-[#4E7BFF] to-[#2B57E5]"
@@ -731,6 +747,12 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
                       >
                         Approve
                       </button>
+                        <button
+    onClick={() => rejectUser(user._id)}
+    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+  >
+    Reject
+  </button>
                     </td>
                   </tr>
                 ))}

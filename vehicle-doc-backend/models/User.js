@@ -24,7 +24,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false, // New users are unapproved by default
     },
-
+isRejected: {
+  type: Boolean,
+  default: false,
+},
     savedPosts: [
       {
         title: String,

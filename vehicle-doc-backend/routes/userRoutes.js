@@ -5,7 +5,9 @@ import {
   updateUser,
   deleteUser,
   approveUser,
-  updateMyProfile
+  updateMyProfile,
+    rejectUser,
+
 } from "../controllers/userController.js";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 import {upload} from "../middlewares/uploadMiddleware.js"; // multer
@@ -26,5 +28,5 @@ router.post("/", protect, adminOnly, createUser);
 router.put("/:id", protect, adminOnly, updateUser);
 router.delete("/:id", protect, adminOnly, deleteUser);
 router.put("/approve/:userId", protect, adminOnly, approveUser);
-
+router.put("/reject/:userId", protect, adminOnly, rejectUser);
 export default router;

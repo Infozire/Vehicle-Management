@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { Home, Car, FileText, Users, Bell, Settings, LogOut } from "lucide-react";
 import API from "../api"; // make sure this points to your axios instance
 
 const Sidebar = () => {
-  const navigate = useNavigate();
   const [pendingRequests, setPendingRequests] = useState(0);
 
   // Fetch pending user requests
