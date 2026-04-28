@@ -32,6 +32,7 @@ const [modalTitle, setModalTitle] = useState("");
 const [modalData, setModalData] = useState([]);
 const [expirySearch, setExpirySearch] = useState("");
 const [docFilter, setDocFilter] = useState("ALL");
+const [loadingPending, setLoadingPending] = useState(true);
 
   const DOC_COLORS = {
     "RC Book": "from-[#4E7BFF] to-[#2B57E5]",
@@ -486,14 +487,18 @@ const handlePreview = (type) => {
   };
 
   // ---------------- PENDING USERS ----------------
-  const fetchPendingUsers = async () => {
-    try {
-      const res = await API.get("/api/admin/user-requests");
-      setPendingUsers(res.data);
-    } catch (err) {
-      console.error("Error fetching pending users:", err);
-    }
-  };
+const fetchPendingUsers = async () => {
+  try {
+    setLoadingPending(true); // ✅ start loading
+    const res = await API.get("/api/admin/user-requests");
+    setPendingUsers(res.data);
+  } catch (err) {
+    console.error("Error fetching pending users:", err);
+  } finally {
+    setLoadingPending(false); // ✅ stop loading
+  }
+};
+
 
   const approveUser = async (id) => {
     try {
@@ -729,49 +734,51 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
         </div>
 
         {/* ---------------- PENDING USER REQUESTS ---------------- */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 mt-10" id="user-requests">
-          <h2 className="text-lg font-semibold mb-4">Pending User Requests</h2>
+   <div className="bg-white rounded-3xl shadow-2xl p-8 mt-10" id="user-requests">
+  <h2 className="text-lg font-semibold mb-4">Pending User Requests</h2>
 
-          {pendingUsers.length === 0 ? (
-            <p>No pending requests</p>
-          ) : (
-            <table className="w-full table-auto border-collapse border">
-              <thead>
-                <tr>
-                  <th className="border px-4 py-2">Name</th>
-                  <th className="border px-4 py-2">Email</th>
-                  <th className="border px-4 py-2">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingUsers.map((user) => (
-                  <tr key={user._id}>
-                    <td className="border px-4 py-2">{user.name}</td>
-                    <td className="border px-4 py-2">{user.email}</td>
-                 <td className="border px-4 py-2">
-  <div className="flex gap-2">
-    <button
-      onClick={() => approveUser(user._id)}
-      className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-    >
-      Approve
-    </button>
+  {loadingPending ? (
+    <p className="text-gray-500">Loading...</p>
+  ) : pendingUsers.length === 0 ? (
+    <p>No pending requests</p>
+  ) : (
+    <table className="w-full table-auto border-collapse border">
+      <thead>
+        <tr>
+          <th className="border px-4 py-2">Name</th>
+          <th className="border px-4 py-2">Email</th>
+          <th className="border px-4 py-2">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {pendingUsers.map((user) => (
+          <tr key={user._id}>
+            <td className="border px-4 py-2">{user.name}</td>
+            <td className="border px-4 py-2">{user.email}</td>
+            <td className="border px-4 py-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => approveUser(user._id)}
+                  className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Approve
+                </button>
 
-    <button
-      onClick={() => rejectUser(user._id)}
-      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-    >
-      Reject
-    </button>
-  </div>
-</td>
+                <button
+                  onClick={() => rejectUser(user._id)}
+                  className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Reject
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )}
+</div>
 
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
         {/* ---------------- PREVIEW MODAL ---------------- */}
         {previewFile && (
           <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
