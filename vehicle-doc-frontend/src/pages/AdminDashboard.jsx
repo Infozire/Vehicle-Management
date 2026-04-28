@@ -503,14 +503,22 @@ const handlePreview = (type) => {
       console.error("Error approving user:", err);
     }
   };
-  const rejectUser = async (id) => {
+const rejectUser = async (id) => {
   try {
+    // ✅ 1. Remove instantly from UI
+    setPendingUsers((prev) => prev.filter((u) => u._id !== id));
+
+    // ✅ 2. Call backend
     await API.put(`/api/users/reject/${id}`);
-    fetchPendingUsers();
+
   } catch (err) {
     console.error("Error rejecting user:", err);
+
+    // ❗ Optional: rollback if API fails
+    fetchPendingUsers();
   }
 };
+
  const filteredExpiringDocs = useMemo(() => {
   return expiringDocs.filter((d) => {
     const matchesVehicle = d.vehicle
@@ -740,20 +748,24 @@ onUpload={(file, side) => handleFileUpload(file, title, side)}
                   <tr key={user._id}>
                     <td className="border px-4 py-2">{user.name}</td>
                     <td className="border px-4 py-2">{user.email}</td>
-                    <td className="border px-4 py-2">
-                      <button
-                        onClick={() => approveUser(user._id)}
-                        className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                      >
-                        Approve
-                      </button>
-                        <button
-    onClick={() => rejectUser(user._id)}
-    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-  >
-    Reject
-  </button>
-                    </td>
+                 <td className="border px-4 py-2">
+  <div className="flex gap-2">
+    <button
+      onClick={() => approveUser(user._id)}
+      className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+    >
+      Approve
+    </button>
+
+    <button
+      onClick={() => rejectUser(user._id)}
+      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+    >
+      Reject
+    </button>
+  </div>
+</td>
+
                   </tr>
                 ))}
               </tbody>

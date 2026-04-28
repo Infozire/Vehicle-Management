@@ -1,47 +1,30 @@
-import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Home, Car, FileText, Users, Bell, Settings, LogOut } from "lucide-react";
-import API from "../api"; // make sure this points to your axios instance
 
-const Sidebar = () => {
-  const [pendingRequests, setPendingRequests] = useState(0);
+const Sidebar = ({ pendingRequests }) => {
 
-  // Fetch pending user requests
-  useEffect(() => {
-    const fetchPendingRequests = async () => {
-      try {
-        const res = await API.get("/api/admin/user-requests"); // backend route returning users with isApproved: false
-        setPendingRequests(res.data.length);
-      } catch (err) {
-        console.error("Failed to fetch pending requests:", err);
-      }
-    };
-
-    fetchPendingRequests();
-  }, []);
-
-const handleLogout = () => {
-  localStorage.removeItem("user");
-  localStorage.removeItem("token");
-  window.location.href = "/login";
-};
-
-
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
 
   const menuItems = [
     { icon: <Home size={18} />, label: "Dashboard", to: "/admin" },
     { icon: <Car size={18} />, label: "Vehicles", to: "/vehicles" },
     { icon: <FileText size={18} />, label: "Documents", to: "/documents" },
     { icon: <Users size={18} />, label: "Users", to: "/users" },
-{ 
-  icon: <Bell size={18} />, 
-  label: "User Requests", 
-  onClick: () => {
-    document.getElementById('user-requests')?.scrollIntoView({ behavior: 'smooth' });
-  },
-  badge: pendingRequests
-}
-,    { icon: <Settings size={18} />, label: "Settings", to: "/settings" },
+
+    { 
+      icon: <Bell size={18} />, 
+      label: "User Requests", 
+      onClick: () => {
+        document.getElementById('user-requests')?.scrollIntoView({ behavior: 'smooth' });
+      },
+      badge: pendingRequests // ✅ from props
+    },
+
+    { icon: <Settings size={18} />, label: "Settings", to: "/settings" },
     { icon: <LogOut size={18} />, label: "Logout", onClick: handleLogout },
   ];
 
@@ -75,6 +58,7 @@ const handleLogout = () => {
 
 export default Sidebar;
 
+
 /* --------- SideItem --------- */
 const SideItem = ({ icon, label, to, active, badge, onClick }) => {
   const baseClass =
@@ -94,8 +78,11 @@ const SideItem = ({ icon, label, to, active, badge, onClick }) => {
       >
         <span className="text-white group-hover:text-violet-200 transition">{icon}</span>
         <span className="flex-1 truncate text-white group-hover:text-violet-200 transition">{label}</span>
-        {badge && (
-          <span className="bg-pink-500 text-[11px] px-2 py-0.5 rounded-full">{badge}</span>
+
+        {badge > 0 && ( // ✅ only show if > 0
+          <span className="bg-pink-500 text-[11px] px-2 py-0.5 rounded-full">
+            {badge}
+          </span>
         )}
       </NavLink>
     );
@@ -108,8 +95,11 @@ const SideItem = ({ icon, label, to, active, badge, onClick }) => {
     >
       <span className="text-violet-200 group-hover:text-white transition">{icon}</span>
       <span className="flex-1 truncate group-hover:text-white transition">{label}</span>
-      {badge && (
-        <span className="bg-pink-500 text-[11px] px-2 py-0.5 rounded-full">{badge}</span>
+
+      {badge > 0 && (
+        <span className="bg-pink-500 text-[11px] px-2 py-0.5 rounded-full">
+          {badge}
+        </span>
       )}
     </div>
   );
