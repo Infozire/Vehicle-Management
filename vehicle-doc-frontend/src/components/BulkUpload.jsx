@@ -15,14 +15,18 @@ const parseDate = (value) => {
   }
 
   if (typeof value === "string") {
-    const clean = value.replace(/\./g, "-").replace(/\//g, "-");
+    const clean = value.replace(/\./g, "-").replace(/\//g, "-").trim();
     const parts = clean.split("-");
 
     if (parts.length !== 3) return null;
 
-    let [day, month, year] = parts;
+    let [day, month, year] = parts.map(p => p.trim());
 
-    // convert month if text (Mar)
+    // convert numeric strings
+    day = Number(day);
+    year = Number(year);
+
+    // 🟢 FIX 1: handle month names (Mar)
     const months = {
       jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
       jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
@@ -34,9 +38,19 @@ const parseDate = (value) => {
       month = Number(month) - 1;
     }
 
-    if (!month) return null;
+    if (month === null || month === undefined || isNaN(month)) return null;
 
-    return new Date(Number(year), month, Number(day));
+    // 🟢 FIX 2: handle 2-digit year (VERY IMPORTANT)
+    if (year < 100) {
+      year += 2000;
+    }
+
+    const date = new Date(year, month, day);
+
+    // 🟢 FIX 3: validate date
+    if (isNaN(date.getTime())) return null;
+
+    return date;
   }
 
   return null;
