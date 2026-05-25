@@ -12,7 +12,12 @@ const parseDate = (value) => {
   if (typeof value === "number") {
     const excelEpoch = new Date(Date.UTC(1899, 11, 30));
     const date = new Date(excelEpoch.getTime() + value * 86400000);
-    return date;
+
+    const dayStr = String(date.getDate()).padStart(2, "0");
+    const monthStr = date.toLocaleString("en-US", { month: "short" });
+    const yearStr = date.getFullYear();
+
+    return `${dayStr}-${monthStr}-${yearStr}`;
   }
 
   // ✅ Normalize format
@@ -23,14 +28,21 @@ const parseDate = (value) => {
 
   let [day, month, year] = parts.map(Number);
 
-  // 🚨 Fix wrong order (sometimes Excel gives YYYY-MM-DD)
+  // 🚨 Fix wrong order
   if (year < 100) return null;
+
   if (day > 31) {
-    // means format is YYYY-MM-DD
     [year, month, day] = parts.map(Number);
   }
 
-return new Date(year, month - 1, day);};
+  const date = new Date(year, month - 1, day);
+
+  const dayStr = String(date.getDate()).padStart(2, "0");
+  const monthStr = date.toLocaleString("en-US", { month: "short" });
+  const yearStr = date.getFullYear();
+
+  return `${dayStr}-${monthStr}-${yearStr}`;
+};
 
 
 
