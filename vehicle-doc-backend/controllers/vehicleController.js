@@ -63,8 +63,11 @@ export const createVehicle = async (req, res) => {
     // 🔥 FIX: Safe date converter
     const toDate = (val) => {
       if (!val) return null;
-      const d = new Date(val);
-      return isNaN(d.getTime()) ? null : d;
+const d = new Date(val);
+
+if (isNaN(d.getTime())) return null;
+
+return d;      return isNaN(d.getTime()) ? null : d;
     };
 
     // 🔥 DEBUG (VERY IMPORTANT)

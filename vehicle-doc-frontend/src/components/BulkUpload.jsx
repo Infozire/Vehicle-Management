@@ -8,40 +8,38 @@ export function BulkUpload({ onDone }) {
 const parseDate = (value) => {
   if (!value) return null;
 
-  // ✅ Excel numeric date
+  // Excel numeric date
   if (typeof value === "number") {
     const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-    const date = new Date(excelEpoch.getTime() + value * 86400000);
-
-    const dayStr = String(date.getDate()).padStart(2, "0");
-    const monthStr = date.toLocaleString("en-US", { month: "short" });
-    const yearStr = date.getFullYear();
-
-    return `${dayStr}-${monthStr}-${yearStr}`;
+    return new Date(excelEpoch.getTime() + value * 86400000);
   }
 
-  // ✅ Normalize format
-  const cleanValue = value.replace(/\./g, "-").replace(/\//g, "-");
+  if (typeof value === "string") {
+    const clean = value.replace(/\./g, "-").replace(/\//g, "-");
+    const parts = clean.split("-");
 
-  const parts = cleanValue.split("-");
-  if (parts.length !== 3) return null;
+    if (parts.length !== 3) return null;
 
-  let [day, month, year] = parts.map(Number);
+    let [day, month, year] = parts;
 
-  // 🚨 Fix wrong order
-  if (year < 100) return null;
+    // convert month if text (Mar)
+    const months = {
+      jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+      jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+    };
 
-  if (day > 31) {
-    [year, month, day] = parts.map(Number);
+    if (isNaN(month)) {
+      month = months[month.toLowerCase()] ?? null;
+    } else {
+      month = Number(month) - 1;
+    }
+
+    if (!month) return null;
+
+    return new Date(Number(year), month, Number(day));
   }
 
-  const date = new Date(year, month - 1, day);
-
-  const dayStr = String(date.getDate()).padStart(2, "0");
-  const monthStr = date.toLocaleString("en-US", { month: "short" });
-  const yearStr = date.getFullYear();
-
-  return `${dayStr}-${monthStr}-${yearStr}`;
+  return null;
 };
 
 
